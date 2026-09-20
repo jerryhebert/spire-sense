@@ -39,6 +39,18 @@ public static class SpireSenseMod
             ModLog.Warn($"Duplicate card entries across job tables: {string.Join(", ", JobDatabase.Duplicates)}");
         }
 
+        // Registers this assembly's Node subclasses with Godot so the engine knows to call their
+        // _Ready/_Process/_UnhandledKeyInput overrides. Without it the overlay node can be created
+        // but never ticked.
+        try
+        {
+            Godot.Bridge.ScriptManagerBridge.LookupScriptsInAssembly(Assembly.GetExecutingAssembly());
+        }
+        catch (Exception ex)
+        {
+            ModLog.Warn($"Could not register mod scripts with Godot: {ex.Message}");
+        }
+
         _harmony = new Harmony(ModId);
         _harmony.PatchAll(Assembly.GetExecutingAssembly());
 
