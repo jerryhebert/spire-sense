@@ -20,8 +20,11 @@ change a card's jobs. Curses and statuses are counted separately and never contr
 **Hovering any card** adds a Spire Sense line to its tooltip naming the jobs it counts for, and says
 when a classification was guessed rather than curated.
 
+Both panels can be dragged anywhere and resized between 50% and 200% with the size buttons on them.
+Resizing scales the whole panel, text and spacing together, and the size is shared by both.
+
 **Disagree with a verdict?** Open any card in the inspect view, from the Compendium or from a run,
-and a panel appears with a toggle per job. Your choice is saved to
+and a panel appears with a toggle per job. Drag it by its heading if the card's own tooltips cover it. Your choice is saved to
 `%APPDATA%\SlayTheSpire2\spiresense_overrides.json` and takes priority over the shipped tables, so
 it survives mod updates. Reset returns the card to the shipped classification.
 

@@ -16,21 +16,19 @@ public partial class JobEditorPanel : PanelContainer
     private Button _resetButton = null!;
     private string? _cardClassName;
     private bool _suppressCallbacks;
+    private bool _dragging;
+    private OverlaySettings _settings = null!;
 
     public override void _Ready()
     {
         Name = "SpireSenseJobEditor";
+        _settings = OverlaySettings.Current;
 
-        // Anchored to the top-right of the inspect screen, clear of the card art in the centre.
-        AnchorLeft = 1f;
-        AnchorRight = 1f;
-        AnchorTop = 0f;
-        AnchorBottom = 0f;
-        OffsetLeft = -360f;
-        OffsetRight = -24f;
-        OffsetTop = 140f;
-        GrowVertical = GrowDirection.End;
+        // Free-positioned rather than anchored: the card's own tooltips can sit on top of it, so it
+        // has to be draggable, and a fixed anchor would fight the saved position.
         MouseFilter = MouseFilterEnum.Stop;
+        CustomMinimumSize = new Vector2(320, 0);
+        GuiInput += OnPanelGuiInput;
 
         var style = new StyleBoxFlat
         {
@@ -51,11 +49,11 @@ public partial class JobEditorPanel : PanelContainer
         };
         AddThemeStyleboxOverride("panel", style);
 
-        var column = new VBoxContainer { Name = "Column" };
+        var column = new VBoxContainer { Name = "Column", MouseFilter = MouseFilterEnum.Ignore };
         column.AddThemeConstantOverride("separation", 6);
         AddChild(column);
 
-        var heading = new Label { Text = "Spire Sense — jobs" };
+        var heading = new Label { Text = "Spire Sense — jobs  (drag to move)", MouseFilter = MouseFilterEnum.Ignore };
         heading.AddThemeFontSizeOverride("font_size", 20);
         heading.AddThemeColorOverride("font_color", new Color("e0c070"));
         column.AddChild(heading);
@@ -76,7 +74,7 @@ public partial class JobEditorPanel : PanelContainer
             _toggles[job] = button;
         }
 
-        _sourceLabel = new Label { Text = "" };
+        _sourceLabel = new Label { Text = "", MouseFilter = MouseFilterEnum.Ignore };
         _sourceLabel.AddThemeFontSizeOverride("font_size", 14);
         _sourceLabel.AddThemeColorOverride("font_color", new Color("9a9a9a"));
         _sourceLabel.AutowrapMode = TextServer.AutowrapMode.WordSmart;
@@ -86,6 +84,56 @@ public partial class JobEditorPanel : PanelContainer
         _resetButton.AddThemeFontSizeOverride("font_size", 15);
         _resetButton.Pressed += OnResetPressed;
         column.AddChild(_resetButton);
+
+        column.AddChild(ScaleControls.Build(_settings, 14, ApplyScale));
+        ApplyScale();
+        RestorePosition();
+    }
+
+    private void ApplyScale()
+    {
+        Scale = Vector2.One * _settings.ClampedScale;
+    }
+
+    /// <summary>
+    /// Uses the saved position, or parks the panel on the right of the screen the first time. The
+    /// default is computed from the viewport rather than hard-coded so it lands sensibly at any
+    /// window size.
+    /// </summary>
+    private void RestorePosition()
+    {
+        if (_settings.EditorX is { } x && _settings.EditorY is { } y)
+        {
+            Position = new Vector2(x, y);
+            return;
+        }
+
+        var viewport = GetViewportRect().Size;
+        Position = new Vector2(viewport.X * 0.66f, viewport.Y * 0.14f);
+    }
+
+    private void OnPanelGuiInput(InputEvent @event)
+    {
+        switch (@event)
+        {
+            case InputEventMouseButton { ButtonIndex: MouseButton.Left } button:
+                _dragging = button.Pressed;
+                if (!button.Pressed)
+                {
+                    _settings.EditorX = Position.X;
+                    _settings.EditorY = Position.Y;
+                    _settings.Save();
+                }
+                AcceptEvent();
+                break;
+
+            // Relative is in this control's own scaled space, so it has to be scaled back up or
+            // the panel drifts behind the cursor at any scale other than 1.
+            case InputEventMouseMotion motion when _dragging:
+                Position += motion.Relative * Scale;
+                AcceptEvent();
+                break;
+        }
     }
 
     /// <summary>Points the panel at a card. Pass null to hide it.</summary>

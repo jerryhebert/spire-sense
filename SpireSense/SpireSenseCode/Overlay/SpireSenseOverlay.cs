@@ -112,12 +112,14 @@ public partial class SpireSenseOverlay : CanvasLayer
         _hotkeyButton.Pressed += BeginHotkeyCapture;
         UpdateHotkeyButton();
 
-        var column = new VBoxContainer { Name = "Column" };
+        var column = new VBoxContainer { Name = "Column", MouseFilter = Control.MouseFilterEnum.Ignore };
         column.AddThemeConstantOverride("separation", 6);
         column.AddChild(_label);
         column.AddChild(_hotkeyButton);
+        column.AddChild(ScaleControls.Build(_settings, Math.Max(12, _settings.FontSize - 5), ApplyScale));
         _panel.AddChild(column);
         AddChild(_panel);
+        ApplyScale();
 
         Visible = _settings.Visible;
         _panel.Visible = false; // Stays hidden until a run is in progress.
@@ -171,6 +173,13 @@ public partial class SpireSenseOverlay : CanvasLayer
     private void UpdateHotkeyButton()
     {
         _hotkeyButton.Text = $"Hide with: {_settings.ToggleKeyLabel}  (click to change)";
+    }
+
+    private void ApplyScale()
+    {
+        // Scaling the panel scales its text, padding and borders together. PivotOffset stays at the
+        // top-left so the panel grows away from the corner it is positioned by.
+        _panel.Scale = Vector2.One * _settings.ClampedScale;
     }
 
     public override void _Process(double delta)
@@ -236,7 +245,7 @@ public partial class SpireSenseOverlay : CanvasLayer
                 _panel.AcceptEvent();
                 break;
             case InputEventMouseMotion motion when _dragging:
-                _panel.Position += motion.Relative;
+                _panel.Position += motion.Relative * _panel.Scale;
                 _panel.AcceptEvent();
                 break;
         }
