@@ -20,14 +20,14 @@ public static class OverlayText
     private const char DividerChar = '─';
     private const int DividerWidth = 34;
 
-    public static string Build(DeckAnalysis a, bool showCardNames)
+    public static string Build(DeckAnalysis a, bool showCardNames, CycleFigures cycle)
     {
         var sb = new StringBuilder();
         sb.Append($"[b][color={Gold}]Spire Sense[/color][/b]  [color={Dim}]{a.TotalCards} cards[/color]\n");
 
         AppendJobCounts(sb, a);
         AppendDivider(sb);
-        AppendCycleEstimates(sb, a);
+        AppendCycle(sb, cycle);
         AppendFootnotes(sb, a, showCardNames);
 
         return sb.ToString();
@@ -60,12 +60,22 @@ public static class OverlayText
         sb.Append("[/table]");
     }
 
-    /// <summary>What the deck is estimated to do with what it contains.</summary>
-    private static void AppendCycleEstimates(StringBuilder sb, DeckAnalysis a)
+    /// <summary>
+    /// What the deck does per turn: measured from this run once a turn has been played, and
+    /// predicted from the deck until then. The estimate is marked so the two are never confused.
+    /// </summary>
+    private static void AppendCycle(StringBuilder sb, CycleFigures cycle)
     {
+        sb.Append($"[b][color={Gold}]Cycle[/color][/b]");
+        if (!cycle.Measured)
+        {
+            sb.Append($"  [color={Dim}]estimated[/color]");
+        }
+        sb.Append('\n');
+
         sb.Append("[table=3]");
-        AppendRow(sb, "Avg cycle damage", CycleEstimate.Format(a.AvgCycleDamage));
-        AppendRow(sb, "Avg cycle mitigation", CycleEstimate.Format(a.AvgCycleMitigation));
+        AppendRow(sb, "Damage:", CycleFigures.Format(cycle.Damage));
+        AppendRow(sb, "Mitigation:", CycleFigures.Format(cycle.Mitigation));
         sb.Append("[/table]");
     }
 

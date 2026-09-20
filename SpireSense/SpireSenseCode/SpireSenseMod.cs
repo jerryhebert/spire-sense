@@ -96,6 +96,8 @@ public static class SpireSenseMod
             "CardModel.get_HoverTips",
             "NInspectCardScreen._Ready",
             "NInspectCardScreen.UpdateCardDisplay",
+            "CreatureCmd.Damage",
+            "CreatureCmd.GainBlock",
         };
 
         var missing = expected.Where(e => !patched.Contains(e)).ToList();

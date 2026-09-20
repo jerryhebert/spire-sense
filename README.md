@@ -22,8 +22,9 @@ change a card's jobs. Curses and statuses are counted separately and never contr
 **Hovering any card** adds a Spire Sense line to its tooltip naming the jobs it counts for, and says
 when a classification was guessed rather than curated.
 
-Below the job counts, a second section estimates **average damage and mitigation per turn** over one
-full cycle through your deck.
+Below the job counts, a **Cycle** section shows damage and mitigation per turn, measured from the
+run so far and refined as it goes. Before your first turn it falls back to an estimate from the deck,
+marked as such.
 
 Both panels can be dragged anywhere, and resized by the grip in their bottom-right corner, between
 50% and 200%. Resizing scales the whole panel, text and spacing together, and the size is shared by

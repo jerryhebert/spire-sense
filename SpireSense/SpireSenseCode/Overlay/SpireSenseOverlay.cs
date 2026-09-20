@@ -25,6 +25,8 @@ public partial class SpireSenseOverlay : CanvasLayer
     private bool _positionDirty;
     private bool _hasDeck;
     private string? _lastErrorMessage;
+    private object? _lastRun;
+    private CycleFigures _lastCycle;
 
     /// <summary>Adds the overlay to the scene tree. Safe to call from mod initialization.</summary>
     public static void Install()
@@ -222,11 +224,15 @@ public partial class SpireSenseOverlay : CanvasLayer
             }
 
             _hasDeck = true;
+            TrackRun();
+
             var analysis = DeckAnalysis.Analyze(deck.Select(CardFactsReader.Read));
-            if (_lastAnalysis == null || !analysis.Equals(_lastAnalysis))
+            var cycle = CycleFigures.From(analysis, RunStats.Current);
+            if (_lastAnalysis == null || !analysis.Equals(_lastAnalysis) || !cycle.Equals(_lastCycle))
             {
                 _lastAnalysis = analysis;
-                _label.Text = OverlayText.Build(analysis, _settings.ShowCardNames);
+                _lastCycle = cycle;
+                _label.Text = OverlayText.Build(analysis, _settings.ShowCardNames, cycle);
             }
         }
         catch (Exception ex)
@@ -238,6 +244,29 @@ public partial class SpireSenseOverlay : CanvasLayer
                 _lastErrorMessage = ex.Message;
                 ModLog.Warn($"Overlay update failed: {ex.Message}");
             }
+        }
+    }
+
+    /// <summary>
+    /// Starts fresh figures when a new run begins, and registers the turn being played so that
+    /// turns where nothing happened still count toward the averages.
+    /// </summary>
+    private void TrackRun()
+    {
+        var run = RunAccess.CurrentRun;
+        if (!ReferenceEquals(run, _lastRun))
+        {
+            _lastRun = run;
+            RunStats.StartNewRun();
+            ModLog.Info("New run detected; cycle figures reset.");
+        }
+
+        var combat = RunAccess.LocalPlayer?.PlayerCombatState;
+        if (combat != null)
+        {
+            // Identifies one turn of one combat: a new combat object or a new turn number both
+            // mean a turn the figures have not counted yet.
+            RunStats.Current.NoteTurn($"{combat.GetHashCode()}:{combat.TurnNumber}");
         }
     }
 
