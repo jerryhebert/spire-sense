@@ -7,7 +7,7 @@ An in-run overlay for Slay the Spire 2 that counts how many cards in your deck d
 | Job | Meaning |
 |---|---|
 | Frontloaded Damage | Deals real damage the turn it is played, no setup needed |
-| of which AoE | The subset of those that hit every enemy |
+| Area Damage | Damages every enemy, whenever that damage lands |
 | Frontloaded Block | Prevents damage the turn it is played (block, weaken-all, intangible...) |
 | Scaling | Makes the deck stronger as the fight goes on (powers, strength, engines) |
 | Card Draw / Manipulation | Draw, scry, tutor, retain, top-decking, permanent thinning |
@@ -64,6 +64,8 @@ Three sources, in priority order:
 2. **The curated tables** below.
 3. **A heuristic**, for cards no table knows about.
 
+- [`SpireSenseCode/Data/CLASSIFICATION.md`](SpireSenseCode/Data/CLASSIFICATION.md) defines what each
+  job means and is the specification the tables are built from. Read it before changing a verdict.
 - `SpireSenseCode/Data/jobs.<pool>.json` holds one curated entry per card, keyed by the card's C# class
   name in the game assembly (e.g. `PommelStrike`). Each entry has a `jobs` array and a `note`.
   These files are embedded into the dll at build time, so edit and rebuild to change a verdict.

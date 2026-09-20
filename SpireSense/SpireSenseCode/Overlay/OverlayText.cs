@@ -29,15 +29,14 @@ public static class OverlayText
             var count = a.Counts[job];
             var guessed = a.GuessedCounts[job];
             var name = JobInfo.DisplayName(job);
-            var isSub = job == Job.FrontloadedAoe;
             var figure = $"{a.PercentFor(job)}% ({count})";
 
             sb.Append("[cell]");
-            sb.Append(isSub ? $"[color={Dim}]{Escape(name)}[/color]" : Escape(name));
+            sb.Append(Escape(name));
             sb.Append("[/cell][cell]");
             sb.Append(ColumnGap);
             sb.Append("[/cell][cell]");
-            sb.Append(isSub ? $"[color={Dim}]{figure}[/color]" : $"[b]{figure}[/b]");
+            sb.Append($"[b]{figure}[/b]");
             if (guessed > 0)
             {
                 sb.Append($" [color={Dim}]({guessed} guessed)[/color]");

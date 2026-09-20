@@ -33,14 +33,15 @@ public class JobTableDataTests
     }
 
     [Fact]
-    public void EveryAoeCardAlsoCountsAsFrontloadedDamage()
+    public void AreaDamageDoesNotRequireFrontloadedDamage()
     {
-        var offenders = JobDatabase.All
-            .Where(e => e.Value.Contains(Job.FrontloadedAoe) && !e.Value.Contains(Job.FrontloadedDamage))
-            .Select(e => e.Key)
-            .ToList();
+        // Area damage is its own job, so powers that hit every enemy over time can carry it alone.
+        // If nothing does, the tables have slipped back to treating it as a sub-category.
+        var aoeWithoutFrontloaded = JobDatabase.All
+            .Count(e => e.Value.Contains(Job.Aoe) && !e.Value.Contains(Job.FrontloadedDamage));
 
-        Assert.Empty(offenders);
+        Assert.True(aoeWithoutFrontloaded > 0,
+            "No card has area damage without frontloaded damage, which suggests the old subset rule crept back.");
     }
 
     [Fact]
@@ -67,6 +68,60 @@ public class JobTableDataTests
         }
 
         Assert.Empty(bad);
+    }
+
+    [Fact]
+    public void NoNoteDescribesAreaDamageWithoutTheAreaDamageTag()
+    {
+        // This is the bug that prompted the rewrite, caught mechanically. Every wrong entry in the
+        // first pass had already written the disqualifying fact into its own note: Inferno read
+        // "6 dmg to all enemies" while tagged Scaling only. If a note says a card damages every
+        // enemy, the tags have to agree.
+        var offenders = new List<string>();
+
+        foreach (var (resource, root) in ReadRawTables())
+        {
+            foreach (var card in root.GetProperty("cards").EnumerateObject())
+            {
+                var note = card.Value.GetProperty("note").GetString() ?? "";
+                if (!DescribesAreaDamage(note))
+                {
+                    continue;
+                }
+
+                var jobs = card.Value.GetProperty("jobs").EnumerateArray().Select(j => j.GetString()).ToList();
+                if (!jobs.Contains(nameof(Job.Aoe)))
+                {
+                    offenders.Add($"{resource}:{card.Name}: \"{note}\" tagged [{string.Join(", ", jobs)}]");
+                }
+            }
+        }
+
+        Assert.Empty(offenders);
+    }
+
+    /// <summary>
+    /// Reads a note as claiming damage to every enemy. Deliberately conservative: a debuff applied
+    /// to all enemies is not area damage, and multi-hit random targeting does not reliably spread,
+    /// so both are excluded rather than reported as false alarms.
+    /// </summary>
+    private static bool DescribesAreaDamage(string note)
+    {
+        var text = note.ToLowerInvariant();
+
+        var hitsEveryone = text.Contains("all enemies") || text.Contains("every enemy")
+            || text.Contains("every other enemy") || text.Contains("to all")
+            || text.Contains("all other enemies");
+
+        var doesDamage = text.Contains("dmg") || text.Contains("damage") || text.Contains("poison");
+
+        var randomlyTargeted = text.Contains("random");
+
+        // A note that states outright the card deals no damage is the author exempting it, which
+        // is better than a silent exception list: the reason sits next to the card.
+        var deniesDamage = text.Contains("no dmg") || text.Contains("no damage");
+
+        return hitsEveryone && doesDamage && !randomlyTargeted && !deniesDamage;
     }
 
     [Fact]
@@ -101,7 +156,7 @@ public class JobTableDataTests
     [InlineData("StrikeIronclad", Job.FrontloadedDamage)]
     [InlineData("DefendIronclad", Job.FrontloadedBlock)]
     [InlineData("DemonForm", Job.Scaling)]
-    [InlineData("Thunderclap", Job.FrontloadedAoe)]
+    [InlineData("Thunderclap", Job.Aoe)]
     [InlineData("BattleTrance", Job.CardDraw)]
     [InlineData("ShrugItOff", Job.FrontloadedBlock)]
     [InlineData("ShrugItOff", Job.CardDraw)]
@@ -118,7 +173,26 @@ public class JobTableDataTests
     {
         Assert.True(JobDatabase.TryGet("Thunderclap", out var jobs));
         Assert.Contains(Job.FrontloadedDamage, jobs);
-        Assert.Contains(Job.FrontloadedAoe, jobs);
+        Assert.Contains(Job.Aoe, jobs);
+    }
+
+    [Theory]
+    // Regressions from the first pass, which assigned each card one headline job and stopped.
+    // Powers that damage every enemy were filed as Scaling only; effects that grow within a turn
+    // were filed by their immediate effect only.
+    [InlineData("Inferno", Job.Aoe)]
+    [InlineData("Inferno", Job.Scaling)]
+    [InlineData("Rage", Job.FrontloadedBlock)]
+    [InlineData("Rage", Job.Scaling)]
+    [InlineData("NoxiousFumes", Job.Aoe)]
+    [InlineData("Panache", Job.Aoe)]
+    [InlineData("Hailstorm", Job.Aoe)]
+    [InlineData("BlackHole", Job.Aoe)]
+    [InlineData("TheBomb", Job.Aoe)]
+    public void CardsMissedByTheFirstPassAreClassifiedNow(string cardClassName, Job expected)
+    {
+        Assert.True(JobDatabase.TryGet(cardClassName, out var jobs), $"{cardClassName} is missing from the tables");
+        Assert.Contains(expected, jobs);
     }
 
     private static IEnumerable<(string Resource, JsonElement Root)> ReadRawTables()
