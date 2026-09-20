@@ -9,7 +9,7 @@ public class OverlayTextTests
     public OverlayTextTests() => TestData.LoadRealTables();
 
     private static string Render(IEnumerable<CardFacts> deck, bool showCardNames = true) =>
-        OverlayText.Build(DeckAnalysis.Analyze(deck), "F8", showCardNames);
+        OverlayText.Build(DeckAnalysis.Analyze(deck), showCardNames);
 
     [Fact]
     public void ShowsEveryJobRowAndTheDeckSize()
@@ -25,11 +25,14 @@ public class OverlayTextTests
     }
 
     [Fact]
-    public void NamesTheConfiguredToggleKey()
+    public void DoesNotRepeatTheHotkeyInTheHeader()
     {
-        var text = OverlayText.Build(DeckAnalysis.Empty, "Backslash", showCardNames: true);
+        // The rebind button under the counts shows the current key, so the header must not
+        // duplicate it and go stale after a rebind.
+        var text = OverlayText.Build(DeckAnalysis.Empty, showCardNames: true);
 
-        Assert.Contains("Backslash hides", text);
+        Assert.Contains("0 cards", text);
+        Assert.DoesNotContain("hides", text);
     }
 
     [Fact]

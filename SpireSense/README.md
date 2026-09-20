@@ -18,9 +18,14 @@ counted separately and never contribute to a job.
 ## Using it
 
 - The panel appears automatically once a run is in progress and hides on the main menu.
-- **F8** toggles it. Click and drag the panel to move it. Both are remembered.
-- Settings live in `%APPDATA%\SlayTheSpire2\spiresense.json` (created on first toggle or drag):
-  `visible`, `x`, `y`, `font_size`, `toggle_key` (any Godot `Key` name, e.g. `F8`, `Backslash`, `KpMultiply`), `show_card_names`.
+- **Insert** hides and shows it. Click and drag the panel to move it. Both are remembered.
+- To rebind, click the hotkey button on the panel and press any key. Escape cancels rather than
+  binding, so Escape cannot be used as the hotkey. Insert is the default because the game and other
+  mods rarely claim it.
+- Settings live in `%APPDATA%\SlayTheSpire2\spiresense.json` (created on first toggle, drag or
+  rebind): `visible`, `x`, `y`, `font_size`, `toggle_key` (any Godot `Key` name), `show_card_names`,
+  `show_card_tips`. Delete the file to reset everything, which is the way out if you ever hide the
+  panel and bind the hotkey to something another mod has taken.
 - Cards the mod has no table entry for are classified by a rough heuristic and shown as
   "(N guessed)" plus a "Guessed:" list. Cards where even the heuristic finds nothing appear under "No job:".
 

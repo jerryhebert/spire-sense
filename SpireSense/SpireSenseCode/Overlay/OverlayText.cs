@@ -13,10 +13,10 @@ public static class OverlayText
     /// <summary>How many card names are listed before the rest are elided.</summary>
     public const int MaxListedNames = 6;
 
-    public static string Build(DeckAnalysis a, string toggleKeyLabel, bool showCardNames)
+    public static string Build(DeckAnalysis a, bool showCardNames)
     {
         var sb = new StringBuilder();
-        sb.Append($"[b][color={Gold}]Spire Sense[/color][/b]  [color={Dim}]{a.TotalCards} cards · {Escape(toggleKeyLabel)} hides[/color]\n");
+        sb.Append($"[b][color={Gold}]Spire Sense[/color][/b]  [color={Dim}]{a.TotalCards} cards[/color]\n");
         sb.Append("[table=2]");
 
         foreach (var job in JobInfo.All)

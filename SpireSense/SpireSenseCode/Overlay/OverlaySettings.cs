@@ -17,14 +17,27 @@ public sealed class OverlaySettings
     [JsonPropertyName("x")] public float X { get; set; } = 16f;
     [JsonPropertyName("y")] public float Y { get; set; } = 120f;
     [JsonPropertyName("font_size")] public int FontSize { get; set; } = 20;
-    [JsonPropertyName("toggle_key")] public string ToggleKey { get; set; } = "F8";
+    /// <summary>
+    /// Name of a Godot <see cref="Key"/>, e.g. "Insert", "F9", "Backslash". Rebindable in game.
+    /// Insert is the default because it is rarely claimed by the game or by other mods; F8 was not.
+    /// </summary>
+    [JsonPropertyName("toggle_key")] public string ToggleKey { get; set; } = DefaultToggleKey;
     [JsonPropertyName("show_card_names")] public bool ShowCardNames { get; set; } = true;
     [JsonPropertyName("show_card_tips")] public bool ShowCardTips { get; set; } = true;
 
     /// <summary>The settings in effect. Loaded once during mod initialization.</summary>
     public static OverlaySettings Current { get; private set; } = new();
 
-    public Key ParsedToggleKey => Enum.TryParse<Key>(ToggleKey, ignoreCase: true, out var key) ? key : Key.F8;
+    public const string DefaultToggleKey = "Insert";
+
+    /// <summary>Computed from <see cref="ToggleKey"/>; JsonIgnore keeps it out of the saved file.</summary>
+    [JsonIgnore]
+    public Key ParsedToggleKey =>
+        Enum.TryParse<Key>(ToggleKey, ignoreCase: true, out var key) ? key : Key.Insert;
+
+    /// <summary>How the current hotkey should read on screen.</summary>
+    [JsonIgnore]
+    public string ToggleKeyLabel => ParsedToggleKey.ToString();
 
     /// <summary>Loads settings from disk and publishes them as <see cref="Current"/>.</summary>
     public static OverlaySettings LoadAsCurrent()
