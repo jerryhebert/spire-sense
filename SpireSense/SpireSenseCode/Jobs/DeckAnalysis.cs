@@ -16,6 +16,14 @@ public sealed class DeckAnalysis : IEquatable<DeckAnalysis>
 
     private static Dictionary<Job, int> EmptyCounts() => JobInfo.All.ToDictionary(j => j, _ => 0);
 
+    /// <summary>
+    /// What share of the deck does this job, as a whole-number percentage of every card in it.
+    /// Curses and statuses are part of the denominator because they are part of the deck you draw
+    /// from, and the header counts them too.
+    /// </summary>
+    public int PercentFor(Job job) =>
+        TotalCards == 0 ? 0 : (int)Math.Round(Counts[job] * 100.0 / TotalCards, MidpointRounding.AwayFromZero);
+
     public static DeckAnalysis Analyze(IEnumerable<CardFacts> deck)
     {
         var counts = EmptyCounts();

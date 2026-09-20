@@ -31,6 +31,8 @@ counted separately and never contribute to a job.
   or rebind): `visible`, `x`, `y`, `font_size`, `scale`, `editor_x`, `editor_y`, `toggle_key` (any
   Godot `Key` name), `show_card_names`, `show_card_tips`. Delete the file to reset everything, which
   is the way out if you ever hide the panel and bind the hotkey to something another mod has taken.
+- Each job shows the share of your deck doing it and the card count, e.g. "14% (9)". The percentage
+  is of every card in the deck, curses and statuses included, since those are cards you still draw.
 - Cards the mod has no table entry for are classified by a rough heuristic and shown as
   "(N guessed)" plus a "Guessed:" list. Cards where even the heuristic finds nothing appear under "No job:".
 

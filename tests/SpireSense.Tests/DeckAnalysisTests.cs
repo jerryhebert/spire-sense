@@ -86,6 +86,52 @@ public class DeckAnalysisTests
     }
 
     [Fact]
+    public void PercentagesAreOfTheWholeDeck()
+    {
+        var deck = Enumerable.Repeat(CardFacts.Named("StrikeIronclad", CardKind.Attack), 9)
+            .Concat(Enumerable.Repeat(CardFacts.Named("DefendIronclad", CardKind.Skill), 55))
+            .ToList();
+
+        var analysis = DeckAnalysis.Analyze(deck);
+
+        // 9 of 64 is 14.06%, which must read as 14 rather than being truncated or over-rounded.
+        Assert.Equal(64, analysis.TotalCards);
+        Assert.Equal(14, analysis.PercentFor(Job.FrontloadedDamage));
+    }
+
+    [Fact]
+    public void PercentagesCountCursesInTheDeckSize()
+    {
+        var deck = new[]
+        {
+            CardFacts.Named("StrikeIronclad", CardKind.Attack),
+            TestData.Curse("Regret"),
+        };
+
+        // The curse cannot do a job, but it is still a card you draw, so this is 50% not 100%.
+        Assert.Equal(50, DeckAnalysis.Analyze(deck).PercentFor(Job.FrontloadedDamage));
+    }
+
+    [Fact]
+    public void AnEmptyDeckHasNoPercentagesRatherThanDividingByZero()
+    {
+        var analysis = DeckAnalysis.Analyze(Array.Empty<CardFacts>());
+
+        Assert.All(JobInfo.All, job => Assert.Equal(0, analysis.PercentFor(job)));
+    }
+
+    [Fact]
+    public void HalfPercentagesRoundUpRatherThanToEven()
+    {
+        // 1 of 8 is 12.5%. Banker's rounding would give 12; away-from-zero gives 13 consistently.
+        var deck = Enumerable.Repeat(CardFacts.Named("StrikeIronclad", CardKind.Attack), 1)
+            .Concat(Enumerable.Repeat(CardFacts.Named("DefendIronclad", CardKind.Skill), 7))
+            .ToList();
+
+        Assert.Equal(13, DeckAnalysis.Analyze(deck).PercentFor(Job.FrontloadedDamage));
+    }
+
+    [Fact]
     public void IdenticalDecksCompareEqualSoTheOverlayDoesNotRedraw()
     {
         var deck = new[] { CardFacts.Named("StrikeIronclad", CardKind.Attack) };

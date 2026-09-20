@@ -13,11 +13,16 @@ public static class OverlayText
     /// <summary>How many card names are listed before the rest are elided.</summary>
     public const int MaxListedNames = 6;
 
+    /// <summary>Contents of the spacer column. A table column with nothing in it collapses to nothing.</summary>
+    private const string ColumnGap = "    ";
+
     public static string Build(DeckAnalysis a, bool showCardNames)
     {
         var sb = new StringBuilder();
         sb.Append($"[b][color={Gold}]Spire Sense[/color][/b]  [color={Dim}]{a.TotalCards} cards[/color]\n");
-        sb.Append("[table=2]");
+        // Three columns, the middle one empty, which pushes the figures clear of the longest job
+        // name instead of crowding it.
+        sb.Append("[table=3]");
 
         foreach (var job in JobInfo.All)
         {
@@ -25,11 +30,14 @@ public static class OverlayText
             var guessed = a.GuessedCounts[job];
             var name = JobInfo.DisplayName(job);
             var isSub = job == Job.FrontloadedAoe;
+            var figure = $"{a.PercentFor(job)}% ({count})";
 
             sb.Append("[cell]");
             sb.Append(isSub ? $"[color={Dim}]{Escape(name)}[/color]" : Escape(name));
             sb.Append("[/cell][cell]");
-            sb.Append(isSub ? $"[color={Dim}]{count}[/color]" : $"[b]{count}[/b]");
+            sb.Append(ColumnGap);
+            sb.Append("[/cell][cell]");
+            sb.Append(isSub ? $"[color={Dim}]{figure}[/color]" : $"[b]{figure}[/b]");
             if (guessed > 0)
             {
                 sb.Append($" [color={Dim}]({guessed} guessed)[/color]");
