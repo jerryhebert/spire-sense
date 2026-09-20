@@ -188,16 +188,6 @@ public partial class JobEditorPanel : PanelContainer
 
         var jobs = new HashSet<Job>(_toggles.Where(t => t.Value.ButtonPressed).Select(t => t.Key));
 
-        // AoE is a subset of frontloaded damage; keep the pair consistent in both directions.
-        if (job == Job.FrontloadedAoe && pressed)
-        {
-            jobs.Add(Job.FrontloadedDamage);
-        }
-        else if (job == Job.FrontloadedDamage && !pressed)
-        {
-            jobs.Remove(Job.FrontloadedAoe);
-        }
-
         JobOverrides.Set(_cardClassName, jobs);
         CardJobTip.InvalidateCache(_cardClassName);
         ModLog.Info($"Reclassified {_cardClassName} as [{string.Join(", ", jobs)}]");

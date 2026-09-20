@@ -100,7 +100,7 @@ public static class JobDatabase
         var jobs = new HashSet<Job>();
         foreach (var jobName in entry.Jobs ?? new List<string>())
         {
-            if (Enum.TryParse<Job>(jobName, ignoreCase: true, out var job))
+            if (JobInfo.TryParse(jobName, out var job))
             {
                 jobs.Add(job);
             }
@@ -108,12 +108,6 @@ public static class JobDatabase
             {
                 ModLog.Warn($"Unknown job '{jobName}' on card {className} in {resourceName}");
             }
-        }
-
-        // AoE is defined as a subset of frontloaded damage; enforce that regardless of the data.
-        if (jobs.Contains(Job.FrontloadedAoe))
-        {
-            jobs.Add(Job.FrontloadedDamage);
         }
 
         return jobs;

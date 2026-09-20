@@ -59,12 +59,26 @@ public class JobOverridesTests : IDisposable
     }
 
     [Fact]
-    public void MarkingACardAoeAlsoMarksItFrontloadedDamage()
+    public void AreaDamageCanBeSetOnItsOwn()
     {
-        JobOverrides.Set("StrikeIronclad", new[] { Job.FrontloadedAoe });
+        // It used to drag frontloaded damage along with it. A power that hits every enemy over
+        // time is area damage and nothing else, so the two must be independently settable.
+        JobOverrides.Set("StrikeIronclad", new[] { Job.Aoe });
 
         Assert.True(JobOverrides.TryGet("StrikeIronclad", out var jobs));
-        Assert.Contains(Job.FrontloadedDamage, jobs);
+        Assert.Equal(new[] { Job.Aoe }, jobs);
+    }
+
+    [Fact]
+    public void OverrideFilesWrittenBeforeTheRenameStillLoad()
+    {
+        // "FrontloadedAoe" was the old name for this job; an existing user file must not be lost.
+        File.WriteAllText(_path, @"{ ""version"": 1, ""overrides"": { ""Bash"": [""FrontloadedAoe""] } }");
+
+        JobOverrides.Load();
+
+        Assert.True(JobOverrides.TryGet("Bash", out var jobs));
+        Assert.Equal(new[] { Job.Aoe }, jobs);
     }
 
     [Fact]

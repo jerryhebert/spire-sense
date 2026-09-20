@@ -65,7 +65,7 @@ public class CardClassifierTests
 
         Assert.Equal(ClassificationSource.Heuristic, result.Source);
         Assert.Contains(Job.FrontloadedDamage, result.Jobs);
-        Assert.Contains(Job.FrontloadedAoe, result.Jobs);
+        Assert.Contains(Job.Aoe, result.Jobs);
     }
 
     [Fact]
@@ -74,7 +74,7 @@ public class CardClassifierTests
         var result = CardClassifier.Classify(TestData.Attack(TestData.UnknownCardName, 8));
 
         Assert.Contains(Job.FrontloadedDamage, result.Jobs);
-        Assert.DoesNotContain(Job.FrontloadedAoe, result.Jobs);
+        Assert.DoesNotContain(Job.Aoe, result.Jobs);
     }
 
     [Fact]

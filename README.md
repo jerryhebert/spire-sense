@@ -7,7 +7,7 @@ deckbuilding "job", following the framework in
 | Job | Meaning |
 |---|---|
 | Frontloaded Damage | Deals real damage the turn it is played, no setup needed |
-| of which AoE | The subset of those that hit every enemy |
+| Area Damage | Damages every enemy, whenever that damage lands |
 | Frontloaded Block | Prevents damage the turn it is played (block, weaken-all, intangible…) |
 | Scaling | Makes the deck stronger as the fight goes on (powers, strength, engines) |
 | Card Draw / Manipulation | Draw, scry, tutor, retain, top-decking, permanent thinning |
@@ -30,7 +30,8 @@ and a panel appears with a toggle per job. Drag it by its heading if the card's 
 it survives mod updates. Reset returns the card to the shipped classification.
 
 All 519 cards across the Ironclad, Silent, Defect, Necrobinder, Regent and Colorless pools are
-hand-classified, each with a one-line rationale. See [SpireSense/README.md](SpireSense/README.md) for
+hand-classified, each with a one-line rationale. The rules are written down in
+[CLASSIFICATION.md](SpireSense/SpireSenseCode/Data/CLASSIFICATION.md). See [SpireSense/README.md](SpireSense/README.md) for
 how classification works and how to change a verdict.
 
 ## Installing

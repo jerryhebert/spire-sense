@@ -60,7 +60,7 @@ public static class CardClassifier
             jobs.Add(Job.FrontloadedDamage);
             if (card.TargetsAllEnemies)
             {
-                jobs.Add(Job.FrontloadedAoe);
+                jobs.Add(Job.Aoe);
             }
         }
 

@@ -49,7 +49,7 @@ public static class JobOverrides
                 var jobs = new HashSet<Job>();
                 foreach (var name in pair.Value ?? new List<string>())
                 {
-                    if (Enum.TryParse<Job>(name, ignoreCase: true, out var job))
+                    if (JobInfo.TryParse(name, out var job))
                     {
                         jobs.Add(job);
                     }
@@ -57,11 +57,6 @@ public static class JobOverrides
                     {
                         ModLog.Warn($"Ignoring unknown job '{name}' for {pair.Key} in the override file");
                     }
-                }
-
-                if (jobs.Contains(Job.FrontloadedAoe))
-                {
-                    jobs.Add(Job.FrontloadedDamage);
                 }
 
                 ByClassName[pair.Key] = jobs;
@@ -77,12 +72,7 @@ public static class JobOverrides
     /// <summary>Records an override and persists it. Pass an empty set to mean "no jobs".</summary>
     public static void Set(string cardClassName, IEnumerable<Job> jobs, string? path = null)
     {
-        var set = new HashSet<Job>(jobs);
-        if (set.Contains(Job.FrontloadedAoe))
-        {
-            set.Add(Job.FrontloadedDamage);
-        }
-        ByClassName[cardClassName] = set;
+        ByClassName[cardClassName] = new HashSet<Job>(jobs);
         Save(path);
     }
 
