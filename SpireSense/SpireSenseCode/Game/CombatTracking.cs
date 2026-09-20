@@ -185,4 +185,36 @@ public static class CombatTracking
             ModLog.Warn($"Could not record the hand draw: {ex.Message}");
         }
     }
+
+    /// <summary>
+    /// Every draw in the game funnels through this one private method, so a single patch counts
+    /// turn-start hands and draw effects alike. The returned cards are what was actually drawn,
+    /// which matters when the draw pile runs dry and you get fewer than asked for.
+    /// </summary>
+    [HarmonyPatch(typeof(CardPileCmd), "DrawInternal")]
+    [HarmonyPostfix]
+    public static void RecordDraw(Player player, Task<IEnumerable<CardModel>> __result)
+    {
+        try
+        {
+            if (__result == null || !ReferenceEquals(player, RunAccess.LocalPlayer))
+            {
+                return;
+            }
+
+            __result.ContinueWith(
+                task =>
+                {
+                    if (task.IsCompletedSuccessfully)
+                    {
+                        RunStats.Current.AddCardsDrawn(task.Result?.Count() ?? 0);
+                    }
+                },
+                TaskContinuationOptions.ExecuteSynchronously);
+        }
+        catch (Exception ex)
+        {
+            ModLog.Warn($"Could not record cards drawn: {ex.Message}");
+        }
+    }
 }

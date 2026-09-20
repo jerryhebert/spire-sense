@@ -64,7 +64,10 @@ the row it names, not as a verdict.
   or rebind): `visible`, `x`, `y`, `font_size`, `scale`, `editor_x`, `editor_y`, `toggle_key` (any
   Godot `Key` name), `show_card_names`, `show_card_tips`. Delete the file to reset everything, which
   is the way out if you ever hide the panel and bind the hotkey to something another mod has taken.
-- Below a divider, a **Per turn** section: damage dealt and block gained in an average turn.
+- Below a divider, a **Per turn** section: damage dealt, block gained and cards drawn in an average
+  turn.
+  - Draw counts every card you see, turn-start hands and draw effects alike, so it shows whether a
+    draw engine is actually working. The opening hand size alone would not.
   - Measured from the run so far, and refined with every turn you play, so it gets steadier as the
     run goes on. Reset when a new run starts.
   - Per turn rather than per cycle because a cycle total is a moving target: the cycle lengthens

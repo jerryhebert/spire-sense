@@ -90,6 +90,46 @@ public class RunStatsTests
     }
 
     [Fact]
+    public void DrawIsAveragedOverTurnsLikeTheOtherFigures()
+    {
+        var stats = new RunStats();
+        stats.NoteTurn("c1:1");
+        stats.AddCardsDrawn(5);
+        stats.AddCardsDrawn(2);
+        stats.NoteTurn("c1:2");
+        stats.AddCardsDrawn(5);
+
+        // Seven cards on the first turn, five on the second.
+        Assert.Equal(6, stats.CardsDrawnPerTurn, 3);
+    }
+
+    [Fact]
+    public void DrawCountsEffectsNotJustTheOpeningHand()
+    {
+        // The point of measuring rather than reading the hand size: a draw engine shows up here
+        // and does not show up in the size of the hand you are dealt.
+        var stats = new RunStats();
+        stats.NoteTurn("c1:1");
+        stats.NoteHandDraw(5);
+        stats.AddCardsDrawn(5);
+        stats.AddCardsDrawn(4);
+
+        Assert.Equal(5, stats.HandDrawSize, 3);
+        Assert.Equal(9, stats.CardsDrawnPerTurn, 3);
+    }
+
+    [Fact]
+    public void DrawReachesThePanel()
+    {
+        var analysis = DeckAnalysis.Analyze(Array.Empty<CardFacts>());
+
+        var text = OverlayText.Build(analysis, true, new CycleFigures(36, 23, 4.0, 7.5, Measured: true), default);
+
+        Assert.Contains("Draw:", text);
+        Assert.Contains("7.5", text);
+    }
+
+    [Fact]
     public void StartingANewRunClearsTheFigures()
     {
         RunStats.Current.NoteTurn("c1:1");
@@ -145,7 +185,7 @@ public class RunStatsTests
         // lengthens as the deck grows, so the same number meant different things in Act 1 and Act 3.
         var analysis = DeckAnalysis.Analyze(Array.Empty<CardFacts>());
 
-        var text = OverlayText.Build(analysis, true, new CycleFigures(36, 23, 4.0, Measured: true), default);
+        var text = OverlayText.Build(analysis, true, new CycleFigures(36, 23, 4.0, 5.0, Measured: true), default);
 
         Assert.Contains("Per turn", text);
         Assert.DoesNotContain("turns", text.Replace("Per turn", ""));
@@ -156,8 +196,8 @@ public class RunStatsTests
     {
         var analysis = DeckAnalysis.Analyze(Array.Empty<CardFacts>());
 
-        var estimated = OverlayText.Build(analysis, true, new CycleFigures(10, 5, 3.0, Measured: false), default);
-        var measured = OverlayText.Build(analysis, true, new CycleFigures(10, 5, 3.0, Measured: true), default);
+        var estimated = OverlayText.Build(analysis, true, new CycleFigures(10, 5, 3.0, 5.0, Measured: false), default);
+        var measured = OverlayText.Build(analysis, true, new CycleFigures(10, 5, 3.0, 5.0, Measured: true), default);
 
         Assert.Contains("estimated", estimated);
         Assert.DoesNotContain("estimated", measured);
