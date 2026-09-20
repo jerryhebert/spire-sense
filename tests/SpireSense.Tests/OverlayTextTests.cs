@@ -8,8 +8,11 @@ public class OverlayTextTests
 {
     public OverlayTextTests() => TestData.LoadRealTables();
 
-    private static string Render(IEnumerable<CardFacts> deck, bool showCardNames = true) =>
-        OverlayText.Build(DeckAnalysis.Analyze(deck), showCardNames);
+    private static string Render(IEnumerable<CardFacts> deck, bool showCardNames = true)
+    {
+        var analysis = DeckAnalysis.Analyze(deck);
+        return OverlayText.Build(analysis, showCardNames, CycleFigures.From(analysis, new RunStats()));
+    }
 
     [Fact]
     public void ShowsEveryJobRowAndTheDeckSize()
@@ -29,7 +32,7 @@ public class OverlayTextTests
     {
         // The rebind button under the counts shows the current key, so the header must not
         // duplicate it and go stale after a rebind.
-        var text = OverlayText.Build(DeckAnalysis.Empty, showCardNames: true);
+        var text = OverlayText.Build(DeckAnalysis.Empty, showCardNames: true, CycleFigures.From(DeckAnalysis.Empty, new RunStats()));
 
         Assert.Contains("0 cards", text);
         Assert.DoesNotContain("hides", text);
@@ -55,7 +58,7 @@ public class OverlayTextTests
 
         var cursesAt = text.IndexOf("Curses / Status", StringComparison.Ordinal);
         var dividerAt = text.IndexOf('─');
-        var estimatesAt = text.IndexOf("Avg cycle damage", StringComparison.Ordinal);
+        var estimatesAt = text.IndexOf("Cycle", StringComparison.Ordinal);
 
         Assert.InRange(cursesAt, 0, dividerAt);
         Assert.InRange(dividerAt, 0, estimatesAt);

@@ -36,12 +36,16 @@ counted separately and never contribute to a job.
   or rebind): `visible`, `x`, `y`, `font_size`, `scale`, `editor_x`, `editor_y`, `toggle_key` (any
   Godot `Key` name), `show_card_names`, `show_card_tips`. Delete the file to reset everything, which
   is the way out if you ever hide the panel and bind the hotkey to something another mod has taken.
-- Below a divider, two best-effort estimates: **Avg cycle damage** and **Avg cycle mitigation**,
-  the damage and block per turn you would average over one full pass through the deck. The model
-  is in `Jobs/CycleEstimate.cs`: a cycle lasts as long as it takes to draw the deck, energy over
-  those turns caps how much of it you get to play, and unplayable cards still lengthen the cycle,
-  so adding a curse really does lower both numbers. It under-reports multi-hit attacks, which
-  expose only per-hit damage, and ignores Strength and Dexterity, which are unknowable out of combat.
+- Below a divider, a **Cycle** section giving damage and mitigation per turn.
+  - Once you have played a turn these are **measured from the run so far**: every point of damage
+    dealt to enemies and every point of block gained, averaged over the turns played. They get
+    steadier as the run goes on, and reset when a new run starts.
+  - Before that, and marked `estimated`, they are predicted from the deck by `Jobs/CycleEstimate.cs`:
+    a cycle lasts as long as it takes to draw the deck, energy caps how much you get to play, and
+    unplayable cards lengthen the cycle, so a curse lowers both numbers.
+  - The measurement is the better figure. It sees Strength, relics, powers, orbs and multi-hit
+    attacks, none of which the deck data reveals. Overkill is excluded, so hitting a 5 HP enemy for
+    30 counts as 5.
 - Each job shows the share of your deck doing it and the card count, e.g. "14% (9)". The percentage
   is of every card in the deck, curses and statuses included, since those are cards you still draw.
 - Cards the mod has no table entry for are classified by a rough heuristic and shown as

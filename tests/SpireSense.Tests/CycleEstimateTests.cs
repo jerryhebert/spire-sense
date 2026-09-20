@@ -118,11 +118,13 @@ public class CycleEstimateTests
     }
 
     [Theory]
-    [InlineData(0.0, "0.0")]
-    [InlineData(18.0, "18.0")]
-    [InlineData(7.25, "7.3")]
-    public void EstimatesShowOneDecimal(double value, string expected)
+    [InlineData(0.0, "0")]
+    [InlineData(18.0, "18")]
+    [InlineData(7.25, "7")]
+    [InlineData(7.5, "8")]
+    public void FiguresShowAsWholeNumbers(double value, string expected)
     {
-        Assert.Equal(expected, CycleEstimate.Format(value));
+        // These are rough figures; a decimal place would imply precision they do not have.
+        Assert.Equal(expected, CycleFigures.Format(value));
     }
 }
