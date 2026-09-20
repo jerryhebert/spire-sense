@@ -1,6 +1,5 @@
 name: CI
 
-# Not active until this repository has a GitHub remote. Nothing here needs the game installed.
 on:
   push:
     branches: [main]
@@ -16,11 +15,13 @@ jobs:
     name: Tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-dotnet@v4
+      # global-json-file, not a version string: the runner image ships several SDKs and the newest
+      # one wins unless the repo pins it, which silently changes build and test behaviour.
+      - uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: '9.0.x'
+          global-json-file: global.json
 
       # --locked-mode fails if the resolved dependency graph differs from the committed lock file,
       # so a dependency cannot change without that change appearing in the diff.
@@ -34,13 +35,13 @@ jobs:
     name: Dependency audit
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: '9.0.x'
+          global-json-file: global.json
 
-      # Fails the build on any known vulnerability, deprecated package, or floating version range.
+      # Fails on any known vulnerability, deprecated package, or floating version range.
       - name: Audit dependencies
         shell: pwsh
         run: ./scripts/Audit-Dependencies.ps1
