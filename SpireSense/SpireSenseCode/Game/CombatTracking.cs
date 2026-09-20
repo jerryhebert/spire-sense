@@ -34,11 +34,7 @@ public static class CombatTracking
     {
         try
         {
-            // Anything that is not an enemy counts as yours. Requiring the dealer to be the player
-            // missed damage you are plainly responsible for: poison ticks pass no dealer at all,
-            // and a pet such as Osty deals its own damage. Only the receiver being an enemy, checked
-            // per result below, decides whether it lands in the total.
-            if (dealer is { IsEnemy: true } || __result == null)
+            if (__result == null || !IsMine(dealer))
             {
                 return;
             }
@@ -60,6 +56,33 @@ public static class CombatTracking
         {
             ModLog.Warn($"Could not record damage: {ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// Whether a creature's output belongs to you. In multiplayer a teammate's damage and block are
+    /// theirs, not yours, and counting them made the figures read high.
+    ///
+    /// A pet counts as yours: it has no Player of its own but names its owner, and what Osty deals
+    /// and soaks is your deck working.
+    ///
+    /// Poison is the awkward case. It passes no dealer at all, so in multiplayer there is no way to
+    /// know whose it was, and it is counted only when you are the only player rather than credited
+    /// to everyone. That under-reports a poison deck in co-op, which is the safer error.
+    /// </summary>
+    private static bool IsMine(Creature? creature)
+    {
+        var me = RunAccess.LocalPlayer;
+        if (me == null)
+        {
+            return false;
+        }
+
+        if (creature == null)
+        {
+            return RunAccess.CurrentRun?.Players.Count == 1;
+        }
+
+        return ReferenceEquals(creature.Player, me) || ReferenceEquals(creature.PetOwner, me);
     }
 
     private static void Accumulate(IEnumerable<DamageResult>? results)
@@ -98,7 +121,7 @@ public static class CombatTracking
     {
         try
         {
-            if (creature is not { IsPlayer: true } || __result == null)
+            if (__result == null || !IsMine(creature))
             {
                 return;
             }
