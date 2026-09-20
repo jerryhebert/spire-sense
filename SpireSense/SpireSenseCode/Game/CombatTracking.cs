@@ -33,7 +33,11 @@ public static class CombatTracking
     {
         try
         {
-            if (dealer is not { IsPlayer: true } || __result == null)
+            // Anything that is not an enemy counts as yours. Requiring the dealer to be the player
+            // missed damage you are plainly responsible for: poison ticks pass no dealer at all,
+            // and a pet such as Osty deals its own damage. Only the receiver being an enemy, checked
+            // per result below, decides whether it lands in the total.
+            if (dealer is { IsEnemy: true } || __result == null)
             {
                 return;
             }
