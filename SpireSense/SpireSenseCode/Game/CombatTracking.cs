@@ -2,6 +2,7 @@ using HarmonyLib;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Hooks;
 using MegaCrit.Sts2.Core.Models;
@@ -149,10 +150,17 @@ public static class CombatTracking
     /// </summary>
     [HarmonyPatch(typeof(Hook), nameof(Hook.ModifyHandDraw))]
     [HarmonyPostfix]
-    public static void RecordHandDraw(decimal __result)
+    public static void RecordHandDraw(Player player, decimal __result)
     {
         try
         {
+            // The hook runs for every player in the combat, so without this check a teammate's
+            // draw would set your cycle length, and the last one to draw would win.
+            if (!ReferenceEquals(player, RunAccess.LocalPlayer))
+            {
+                return;
+            }
+
             RunStats.Current.NoteHandDraw((double)__result);
         }
         catch (Exception ex)
