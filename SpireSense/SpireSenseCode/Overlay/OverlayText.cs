@@ -10,10 +10,13 @@ public static class OverlayText
     private const string Dim = "#9a9a9a";
     private const string Warn = "#e08a5a";
 
-    public static string Build(DeckAnalysis a, OverlaySettings settings)
+    /// <summary>How many card names are listed before the rest are elided.</summary>
+    public const int MaxListedNames = 6;
+
+    public static string Build(DeckAnalysis a, string toggleKeyLabel, bool showCardNames)
     {
         var sb = new StringBuilder();
-        sb.Append($"[b][color={Gold}]Spire Sense[/color][/b]  [color={Dim}]{a.TotalCards} cards · {settings.ToggleKey} hides[/color]\n");
+        sb.Append($"[b][color={Gold}]Spire Sense[/color][/b]  [color={Dim}]{a.TotalCards} cards · {Escape(toggleKeyLabel)} hides[/color]\n");
         sb.Append("[table=2]");
 
         foreach (var job in JobInfo.All)
@@ -44,29 +47,26 @@ public static class OverlayText
         if (a.UnclassifiedCardNames.Count > 0)
         {
             sb.Append($"\n[color={Warn}]No job: {a.UnclassifiedCardNames.Count}[/color]");
-            if (settings.ShowCardNames)
+            if (showCardNames)
             {
-                sb.Append($" [color={Dim}]{Escape(string.Join(", ", a.UnclassifiedCardNames.Take(6)))}");
-                if (a.UnclassifiedCardNames.Count > 6)
-                {
-                    sb.Append(" …");
-                }
-                sb.Append("[/color]");
+                sb.Append($" [color={Dim}]{NameList(a.UnclassifiedCardNames)}[/color]");
             }
         }
 
-        if (a.GuessedCardNames.Count > 0 && settings.ShowCardNames)
+        if (a.GuessedCardNames.Count > 0 && showCardNames)
         {
-            sb.Append($"\n[color={Dim}]Guessed: {Escape(string.Join(", ", a.GuessedCardNames.Take(6)))}");
-            if (a.GuessedCardNames.Count > 6)
-            {
-                sb.Append(" …");
-            }
-            sb.Append("[/color]");
+            sb.Append($"\n[color={Dim}]Guessed: {NameList(a.GuessedCardNames)}[/color]");
         }
 
         return sb.ToString();
     }
 
-    private static string Escape(string text) => text.Replace("[", "[lb]");
+    private static string NameList(IReadOnlyList<string> names)
+    {
+        var shown = Escape(string.Join(", ", names.Take(MaxListedNames)));
+        return names.Count > MaxListedNames ? shown + " …" : shown;
+    }
+
+    /// <summary>Neutralizes BBCode markup in card names so a stray bracket cannot break the panel.</summary>
+    public static string Escape(string text) => text.Replace("[", "[lb]");
 }

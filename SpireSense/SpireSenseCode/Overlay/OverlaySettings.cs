@@ -1,6 +1,7 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using Godot;
+using SpireSense.SpireSenseCode.Jobs;
 using FileAccess = Godot.FileAccess;
 
 namespace SpireSense.SpireSenseCode.Overlay;
@@ -38,7 +39,7 @@ public sealed class OverlaySettings
         }
         catch (Exception ex)
         {
-            SpireSenseMod.Logger.Warn($"Could not read overlay settings, using defaults: {ex.Message}");
+            ModLog.Warn($"Could not read overlay settings, using defaults: {ex.Message}");
         }
 
         return new OverlaySettings();
@@ -53,7 +54,7 @@ public sealed class OverlaySettings
         }
         catch (Exception ex)
         {
-            SpireSenseMod.Logger.Warn($"Could not save overlay settings: {ex.Message}");
+            ModLog.Warn($"Could not save overlay settings: {ex.Message}");
         }
     }
 }

@@ -1,6 +1,3 @@
-using MegaCrit.Sts2.Core.Entities.Cards;
-using MegaCrit.Sts2.Core.Models;
-
 namespace SpireSense.SpireSenseCode.Jobs;
 
 public enum ClassificationSource
@@ -17,20 +14,20 @@ public readonly record struct Classification(IReadOnlySet<Job> Jobs, Classificat
 
 /// <summary>
 /// Decides which jobs a card performs: curated table first, then a heuristic guess from the card's
-/// type, target and dynamic variables so cards added by game updates or other mods still count for something.
+/// kind, target and values so cards added by game updates or other mods still count for something.
 /// </summary>
 public static class CardClassifier
 {
-    private static readonly IReadOnlySet<Job> None = new HashSet<Job>();
+    private static readonly IReadOnlySet<Job> NoJobs = new HashSet<Job>();
 
-    public static Classification Classify(CardModel card)
+    public static Classification Classify(CardFacts card)
     {
-        if (card.Type is CardType.Status or CardType.Curse)
+        if (card.Kind is CardKind.Status or CardKind.Curse)
         {
-            return new Classification(None, ClassificationSource.Ignored);
+            return new Classification(NoJobs, ClassificationSource.Ignored);
         }
 
-        if (JobDatabase.TryGet(card.GetType().Name, out var curated))
+        if (JobDatabase.TryGet(card.ClassName, out var curated))
         {
             return new Classification(curated, ClassificationSource.Curated);
         }
@@ -38,49 +35,40 @@ public static class CardClassifier
         return new Classification(Guess(card), ClassificationSource.Heuristic);
     }
 
-    private static IReadOnlySet<Job> Guess(CardModel card)
+    private static IReadOnlySet<Job> Guess(CardFacts card)
     {
         var jobs = new HashSet<Job>();
 
-        try
+        // Powers pay off over the course of a fight, which is the definition of scaling.
+        if (card.Kind == CardKind.Power)
         {
-            if (card.Type == CardType.Power)
-            {
-                jobs.Add(Job.Scaling);
-                return jobs;
-            }
+            jobs.Add(Job.Scaling);
+            return jobs;
+        }
 
-            var vars = card.DynamicVars;
-
-            if (card.Type == CardType.Attack && vars.ContainsKey("Damage") && vars["Damage"].BaseValue > 0)
+        if (card.Kind == CardKind.Attack && card.Damage > 0)
+        {
+            jobs.Add(Job.FrontloadedDamage);
+            if (card.TargetsAllEnemies)
             {
-                jobs.Add(Job.FrontloadedDamage);
-                if (card.TargetType == TargetType.AllEnemies)
-                {
-                    jobs.Add(Job.FrontloadedAoe);
-                }
-            }
-
-            if (card.GainsBlock || (vars.ContainsKey("Block") && vars["Block"].BaseValue > 0))
-            {
-                jobs.Add(Job.FrontloadedBlock);
-            }
-
-            if (vars.ContainsKey("Cards") && vars["Cards"].BaseValue > 0)
-            {
-                jobs.Add(Job.CardDraw);
-            }
-
-            if (card.TargetType == TargetType.Self &&
-                ((vars.ContainsKey("StrengthPower") && vars["StrengthPower"].BaseValue > 0) ||
-                 (vars.ContainsKey("DexterityPower") && vars["DexterityPower"].BaseValue > 0)))
-            {
-                jobs.Add(Job.Scaling);
+                jobs.Add(Job.FrontloadedAoe);
             }
         }
-        catch (Exception ex)
+
+        if (card.GainsBlock || card.Block > 0)
         {
-            SpireSenseMod.Logger.Warn($"Heuristic classification failed for {card.GetType().Name}: {ex.Message}");
+            jobs.Add(Job.FrontloadedBlock);
+        }
+
+        if (card.Draw > 0)
+        {
+            jobs.Add(Job.CardDraw);
+        }
+
+        // Permanent Strength/Dexterity on yourself grows every later card; on an enemy it is a debuff.
+        if (card.TargetsSelf && (card.StrengthGain > 0 || card.DexterityGain > 0))
+        {
+            jobs.Add(Job.Scaling);
         }
 
         return jobs;

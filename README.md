@@ -7,8 +7,12 @@ Everything needed to build, package and install mods for Slay the Spire 2 on thi
 | Path | Purpose | In git? |
 |---|---|---|
 | `<ModName>/` | One folder per mod. Solution and project live in the same directory (Godot requires this). | yes |
+| `tests/` | Unit tests for mod logic. Do not reference the game, so they run anywhere. | yes |
+| `scripts/Run-Checks.ps1` | Everything at once: tests, dependency audit, mod build. Run before committing. | yes |
+| `scripts/Audit-Dependencies.ps1` | Supply-chain audit of all NuGet dependencies. Exits non-zero on findings. | yes |
 | `scripts/Decompile-Sts2.ps1` | Regenerates `reference/sts2-decompiled` from the installed game. Re-run after every game update. | yes |
 | `scripts/decompiler/` | Small console app around the ILSpy decompiler engine, used by the script above. | yes |
+| `.github/` | CI workflow and Dependabot config. Inert until this repo has a GitHub remote. | yes |
 | `reference/sts2-decompiled/` | The game's C# source, decompiled. Read-only reference for finding hooks, models and IDs. `DECOMPILED_FROM.json` records the game build. | no |
 | `tools/megadot/` | MegaDot (MegaCrit's Godot fork) editor and its export templates. Used to export `.pck` asset packs. | no |
 
@@ -60,6 +64,31 @@ dotnet sln MyMod\MyMod.sln add MyMod\MyMod.csproj
 ```
 
 Then set `<GodotPath>` in `MyMod\Directory.Build.props` to the MegaDot exe path above. The project auto-detects the game install through the Steam registry keys.
+
+## Checks
+
+```bash
+pwsh ./scripts/Run-Checks.ps1
+```
+
+Runs the unit tests, the dependency audit, and a Release build of the mod. Add `-SkipBuild` on a
+machine without the game.
+
+**Tests.** Mod logic is split so that the decision-making code has no dependency on the game or on
+Godot. The test project compiles those source files directly rather than referencing the mod
+project, because the mod project links the game's assemblies and cannot load outside the game. That
+also means tests run in CI, where no copy of the game exists.
+
+**Dependency audit.** Checks every direct and transitive NuGet package for known vulnerabilities and
+deprecation, and rejects floating version ranges such as `Version="*"`, which would let a future
+restore pull an unreviewed version. Build-time dependencies like analyzers matter most here because
+they execute code during every build. Restore-time auditing is also on in both project files
+(`NuGetAudit`), and both projects write a `packages.lock.json` so a transitive dependency change
+shows up in the diff.
+
+**What CI cannot do.** It cannot compile the mod. Doing so needs the game's own assemblies, which
+are not redistributable and are deliberately not in this repository. CI restores the mod project in
+locked mode to catch dependency drift; compiling it stays a local step.
 
 ## After a game update
 

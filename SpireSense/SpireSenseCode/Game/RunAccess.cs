@@ -1,9 +1,10 @@
-using System.Reflection;
+﻿using System.Reflection;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Runs;
+using SpireSense.SpireSenseCode.Jobs;
 
 namespace SpireSense.SpireSenseCode.Game;
 
@@ -31,7 +32,7 @@ public static class RunAccess
                 if (!_warnedMissingState)
                 {
                     _warnedMissingState = true;
-                    SpireSenseMod.Logger.Error("RunManager.State property not found; the game version may be incompatible with this mod.");
+                    ModLog.Error("RunManager.State property not found; the game version may be incompatible with this mod.");
                 }
                 return null;
             }
@@ -59,6 +60,9 @@ public static class RunAccess
 
             try
             {
+                // Returns null when there is no network identity at all (ordinary single-player),
+                // and throws when there is one but no matching player. In the throwing case we must
+                // NOT guess, or a multiplayer game would show a teammate's deck.
                 var me = LocalContext.GetMe(run);
                 if (me != null)
                 {
@@ -67,7 +71,7 @@ public static class RunAccess
             }
             catch
             {
-                // Falls through to the single-player default below.
+                return null;
             }
 
             return run.Players.Count > 0 ? run.Players[0] : null;
