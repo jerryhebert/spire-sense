@@ -12,7 +12,9 @@ deckbuilding "job", following the framework in
 | Scaling | Makes the deck stronger as the fight goes on (powers, strength, engines) |
 | Card Draw / Manipulation | Draw, scry, tutor, retain, top-decking, permanent thinning |
 
-The panel appears once a run is in progress and updates as your deck changes. **Insert** hides and
+The panel shows only on the combat screen itself and updates as your deck changes. It gets out of
+the way whenever anything opens over combat: settings, the map, your draw or discard pile, a card
+reward, an event. **Insert** hides and
 shows it, and you can drag it anywhere; both are remembered. To use a different key, click the
 hotkey button on the panel and press the one you want. A card can count toward several jobs. Upgrades do not
 change a card's jobs. Curses and statuses are counted separately and never contribute to a job.

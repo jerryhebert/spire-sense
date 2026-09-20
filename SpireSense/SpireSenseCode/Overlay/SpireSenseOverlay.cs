@@ -23,6 +23,7 @@ public partial class SpireSenseOverlay : CanvasLayer
     private DeckAnalysis? _lastAnalysis;
     private bool _dragging;
     private bool _positionDirty;
+    private bool _hasDeck;
     private string? _lastErrorMessage;
 
     /// <summary>Adds the overlay to the scene tree. Safe to call from mod initialization.</summary>
@@ -124,7 +125,7 @@ public partial class SpireSenseOverlay : CanvasLayer
         ApplyScale();
 
         Visible = _settings.Visible;
-        _panel.Visible = false; // Stays hidden until a run is in progress.
+        _panel.Visible = false; // Stays hidden until combat is on screen.
         ModLog.Info($"Overlay installed (visible={_settings.Visible}, toggle={_settings.ParsedToggleKey}).");
     }
 
@@ -191,6 +192,10 @@ public partial class SpireSenseOverlay : CanvasLayer
 
     public override void _Process(double delta)
     {
+        // Checked every frame, not on the poll interval, so the panel disappears the instant a
+        // screen opens over combat rather than a visible fraction of a second later.
+        _panel.Visible = _hasDeck && ScreenAccess.IsOnCombatScreen;
+
         _pollAccumulator += delta;
         if (_pollAccumulator < PollIntervalSeconds)
         {
@@ -211,21 +216,18 @@ public partial class SpireSenseOverlay : CanvasLayer
             var deck = RunAccess.LocalDeck;
             if (deck == null)
             {
-                if (_panel.Visible)
-                {
-                    _panel.Visible = false;
-                    _lastAnalysis = null;
-                }
+                _hasDeck = false;
+                _lastAnalysis = null;
                 return;
             }
 
+            _hasDeck = true;
             var analysis = DeckAnalysis.Analyze(deck.Select(CardFactsReader.Read));
             if (_lastAnalysis == null || !analysis.Equals(_lastAnalysis))
             {
                 _lastAnalysis = analysis;
                 _label.Text = OverlayText.Build(analysis, _settings.ShowCardNames);
             }
-            _panel.Visible = true;
         }
         catch (Exception ex)
         {

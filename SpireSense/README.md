@@ -17,7 +17,10 @@ counted separately and never contribute to a job.
 
 ## Using it
 
-- The panel appears automatically once a run is in progress and hides on the main menu.
+- The panel shows only while you are on the combat screen, and hides whenever anything opens over
+  it: the settings menu, the map, your draw or discard pile, a card reward, an event, the deck view.
+  It asks the game which screen is topmost rather than keeping its own list, so screens added by a
+  future game update hide it correctly without a change here.
 - **Insert** hides and shows it. Click and drag the panel to move it. Both are remembered.
 - To rebind, click the hotkey button on the panel and press any key. Escape cancels rather than
   binding, so Escape cannot be used as the hotkey. Insert is the default because the game and other
