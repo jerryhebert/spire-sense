@@ -80,6 +80,33 @@ public class OverlayTextTests
     }
 
     [Fact]
+    public void ShowsAPercentageAlongsideTheCount()
+    {
+        // 1 of 4 cards does frontloaded damage.
+        var deck = new[]
+        {
+            CardFacts.Named("StrikeIronclad", CardKind.Attack),
+            CardFacts.Named("DefendIronclad", CardKind.Skill),
+            CardFacts.Named("DefendIronclad", CardKind.Skill),
+            CardFacts.Named("DefendIronclad", CardKind.Skill),
+        };
+
+        var text = Render(deck);
+
+        Assert.Contains("25% (1)", text);
+        Assert.Contains("75% (3)", text);
+    }
+
+    [Fact]
+    public void PutsTheFiguresInAThirdColumn()
+    {
+        // A spacer column keeps the numbers clear of the longest job name.
+        var text = Render(new[] { CardFacts.Named("StrikeIronclad", CardKind.Attack) });
+
+        Assert.Contains("[table=3]", text);
+    }
+
+    [Fact]
     public void MarksGuessedCountsInline()
     {
         var deck = new[] { TestData.Attack(TestData.UnknownCardName, 7) with { DisplayName = "Mystery Blade" } };
