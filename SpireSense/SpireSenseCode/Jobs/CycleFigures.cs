@@ -1,17 +1,40 @@
 namespace SpireSense.SpireSenseCode.Jobs;
 
 /// <summary>
-/// The two cycle numbers the overlay shows, and whether they were measured this run or predicted
-/// from the deck. Measured always wins once a turn has been played: it accounts for Strength,
-/// relics, powers, orbs and multi-hit attacks, none of which the static model can see.
+/// The Cycle figures: what the deck does, divided by how long a cycle through it takes.
+///
+/// Cycle length is the denominator on purpose. A whole-cycle total is mathematically unmoved by
+/// adding curses, because over a full pass you still play every real card: per-turn output falls
+/// and the cycle lengthens by the same factor, and the two cancel. Dividing by cycle length is what
+/// makes deck bloat show up, which is the whole reason for watching these numbers.
 /// </summary>
-public readonly record struct CycleFigures(double Damage, double Mitigation, bool Measured)
+public readonly record struct CycleFigures(double Damage, double Mitigation, double CycleTurns, bool Measured)
 {
-    public static CycleFigures From(DeckAnalysis analysis, RunStats stats) =>
-        stats.HasData
-            ? new CycleFigures(stats.DamagePerTurn, stats.MitigationPerTurn, Measured: true)
-            : new CycleFigures(analysis.AvgCycleDamage, analysis.AvgCycleMitigation, Measured: false);
+    /// <summary>
+    /// Measured figures win once a turn has been played: they account for Strength, relics, powers,
+    /// orbs and multi-hit attacks, none of which the deck data reveals.
+    /// </summary>
+    public static CycleFigures From(DeckAnalysis analysis, RunStats stats)
+    {
+        var draw = stats.HasData ? stats.CardsDrawnPerTurn : CycleEstimate.BaseCardsDrawnPerTurn;
+        var turns = CycleEstimate.TurnsPerCycle(analysis.TotalCards, draw);
+
+        if (stats.HasData)
+        {
+            // Already a per-turn rate, which is the deck's output divided by the turns it took.
+            return new CycleFigures(stats.DamagePerTurn, stats.MitigationPerTurn, turns, Measured: true);
+        }
+
+        return new CycleFigures(
+            CycleEstimate.PerTurnOfCycle(analysis.AvgCycleDamage, turns),
+            CycleEstimate.PerTurnOfCycle(analysis.AvgCycleMitigation, turns),
+            turns,
+            Measured: false);
+    }
 
     /// <summary>Whole numbers: these are rough figures and a decimal implies precision they lack.</summary>
     public static string Format(double value) => Math.Round(value, MidpointRounding.AwayFromZero).ToString("0");
+
+    /// <summary>Cycle length reads better with one decimal, since it is usually fractional.</summary>
+    public static string FormatTurns(double turns) => turns <= 0 ? "-" : turns.ToString("0.0");
 }

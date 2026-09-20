@@ -24,6 +24,20 @@ public sealed class RunStats
 
     private string? _lastTurnKey;
 
+    /// <summary>
+    /// Cards drawn at the last turn start, as the game actually computed it, so relics and powers
+    /// that change your draw shorten or lengthen the cycle correctly.
+    /// </summary>
+    public double CardsDrawnPerTurn { get; private set; } = CycleEstimate.BaseCardsDrawnPerTurn;
+
+    public void NoteHandDraw(double cards)
+    {
+        if (cards > 0)
+        {
+            CardsDrawnPerTurn = cards;
+        }
+    }
+
     /// <summary>False until a turn has been played, while the static estimate stands in.</summary>
     public bool HasData => TurnsObserved > 0;
 

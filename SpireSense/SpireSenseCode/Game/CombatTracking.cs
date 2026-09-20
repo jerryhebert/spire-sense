@@ -3,6 +3,7 @@ using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
+using MegaCrit.Sts2.Core.Hooks;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.ValueProps;
 using SpireSense.SpireSenseCode.Jobs;
@@ -33,7 +34,11 @@ public static class CombatTracking
     {
         try
         {
-            if (dealer is not { IsPlayer: true } || __result == null)
+            // Anything that is not an enemy counts as yours. Requiring the dealer to be the player
+            // missed damage you are plainly responsible for: poison ticks pass no dealer at all,
+            // and a pet such as Osty deals its own damage. Only the receiver being an enemy, checked
+            // per result below, decides whether it lands in the total.
+            if (dealer is { IsEnemy: true } || __result == null)
             {
                 return;
             }
@@ -111,6 +116,25 @@ public static class CombatTracking
         catch (Exception ex)
         {
             ModLog.Warn($"Could not record block: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Watches the number of cards actually drawn at turn start, which is what decides how long a
+    /// cycle is. Reading the hook's result picks up every relic and power that changes your draw,
+    /// rather than assuming the base five.
+    /// </summary>
+    [HarmonyPatch(typeof(Hook), nameof(Hook.ModifyHandDraw))]
+    [HarmonyPostfix]
+    public static void RecordHandDraw(decimal __result)
+    {
+        try
+        {
+            RunStats.Current.NoteHandDraw((double)__result);
+        }
+        catch (Exception ex)
+        {
+            ModLog.Warn($"Could not record the hand draw: {ex.Message}");
         }
     }
 }

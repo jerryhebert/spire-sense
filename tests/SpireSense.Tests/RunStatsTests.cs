@@ -110,8 +110,11 @@ public class RunStatsTests
 
         var figures = CycleFigures.From(analysis, new RunStats());
 
+        // The analysis holds a whole-cycle total; the displayed figure divides it by cycle length,
+        // which for 10 cards at the base 5 draw is 2 turns.
         Assert.False(figures.Measured);
-        Assert.Equal(analysis.AvgCycleDamage, figures.Damage, 3);
+        Assert.Equal(analysis.AvgCycleDamage / 2, figures.Damage, 3);
+        Assert.Equal(2.0, figures.CycleTurns, 3);
     }
 
     [Fact]
@@ -128,9 +131,11 @@ public class RunStatsTests
 
         var figures = CycleFigures.From(analysis, stats);
 
+        // Measured rates are already per turn, so they pass through unchanged.
         Assert.True(figures.Measured);
         Assert.Equal(41, figures.Damage, 3);
         Assert.Equal(23, figures.Mitigation, 3);
+        Assert.Equal(2.0, figures.CycleTurns, 3);
     }
 
     [Fact]
@@ -138,8 +143,8 @@ public class RunStatsTests
     {
         var analysis = DeckAnalysis.Analyze(Array.Empty<CardFacts>());
 
-        var estimated = OverlayText.Build(analysis, true, new CycleFigures(10, 5, Measured: false));
-        var measured = OverlayText.Build(analysis, true, new CycleFigures(10, 5, Measured: true));
+        var estimated = OverlayText.Build(analysis, true, new CycleFigures(10, 5, 3.0, Measured: false));
+        var measured = OverlayText.Build(analysis, true, new CycleFigures(10, 5, 3.0, Measured: true));
 
         Assert.Contains("estimated", estimated);
         Assert.DoesNotContain("estimated", measured);

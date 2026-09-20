@@ -12,10 +12,10 @@ public sealed class DeckAnalysis : IEquatable<DeckAnalysis>
     public IReadOnlyList<string> UnclassifiedCardNames { get; private init; } = Array.Empty<string>();
     public IReadOnlyList<string> GuessedCardNames { get; private init; } = Array.Empty<string>();
 
-    /// <summary>Estimated damage per turn, averaged over one cycle through the deck.</summary>
+    /// <summary>Estimated damage over one whole pass through the deck.</summary>
     public double AvgCycleDamage { get; private init; }
 
-    /// <summary>Estimated block per turn, averaged over one cycle through the deck.</summary>
+    /// <summary>Estimated block over one whole pass through the deck.</summary>
     public double AvgCycleMitigation { get; private init; }
 
     public static readonly DeckAnalysis Empty = new();
@@ -96,8 +96,8 @@ public sealed class DeckAnalysis : IEquatable<DeckAnalysis>
             GuessedCounts = guessed,
             UnclassifiedCardNames = unclassified,
             GuessedCardNames = guessedNames,
-            AvgCycleDamage = CycleEstimate.PerTurn((double)deckDamage, total, deckEnergy),
-            AvgCycleMitigation = CycleEstimate.PerTurn((double)deckBlock, total, deckEnergy),
+            AvgCycleDamage = CycleEstimate.PerCycle((double)deckDamage, total, deckEnergy),
+            AvgCycleMitigation = CycleEstimate.PerCycle((double)deckBlock, total, deckEnergy),
         };
     }
 

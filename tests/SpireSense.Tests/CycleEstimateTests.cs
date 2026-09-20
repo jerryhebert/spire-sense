@@ -14,14 +14,39 @@ public class CycleEstimateTests
         CardFacts.Named("ZzzDefend", CardKind.Skill) with { Block = block, EnergyCost = cost };
 
     [Theory]
-    [InlineData(10, 2)]
-    [InlineData(5, 1)]
-    [InlineData(1, 1)]
-    [InlineData(0, 1)]
-    [InlineData(11, 3)]
-    public void ACycleLastsAsLongAsItTakesToDrawTheDeck(int deckSize, int expectedTurns)
+    [InlineData(15, 5, 3.0)]
+    [InlineData(15, 7, 15.0 / 7)]
+    [InlineData(10, 5, 2.0)]
+    [InlineData(12, 5, 2.4)]
+    [InlineData(0, 5, 0.0)]
+    public void ACycleLastsDeckSizeDividedByDraw(int deckSize, double draw, double expected)
     {
-        Assert.Equal(expectedTurns, CycleEstimate.TurnsPerCycle(deckSize));
+        // Fractional on purpose: 15 cards at 7 draw is 15/7 turns, not 3. Rounding up would
+        // overstate every deck whose size is not a multiple of its draw.
+        Assert.Equal(expected, CycleEstimate.TurnsPerCycle(deckSize, draw), 4);
+    }
+
+    [Fact]
+    public void AnUnknownDrawFallsBackToTheBaseFive()
+    {
+        Assert.Equal(3.0, CycleEstimate.TurnsPerCycle(15, 0), 4);
+    }
+
+    [Fact]
+    public void ACycleTotalIsSpreadAcrossTheTurnsItTakes()
+    {
+        // 108 damage over a 3 turn cycle is 36 a turn.
+        Assert.Equal(36, CycleEstimate.PerTurnOfCycle(108, cycleTurns: 3), 3);
+    }
+
+    [Fact]
+    public void MoreDrawShortensTheCycleAndSoRaisesTheFigure()
+    {
+        var atFive = CycleEstimate.PerTurnOfCycle(108, CycleEstimate.TurnsPerCycle(15, 5));
+        var atSeven = CycleEstimate.PerTurnOfCycle(108, CycleEstimate.TurnsPerCycle(15, 7));
+
+        // Drawing more gets through the same deck in fewer turns, so each turn does more.
+        Assert.True(atSeven > atFive);
     }
 
     [Fact]
@@ -54,13 +79,14 @@ public class CycleEstimateTests
     }
 
     [Fact]
-    public void DamageIsAveragedOverTheTurnsItTakesToDrawTheDeck()
+    public void TheEstimateIsTheWholeDeckThrottledByEnergy()
     {
-        // 10 attacks of 6 for 1 energy: 60 damage, 2 turns, and 6 energy covers a cost of 10 only
-        // 60% of the way, so 60 * 0.6 / 2 = 18 per turn.
+        // 10 attacks of 6 for 1 energy: 60 damage over a 2 turn cycle, but 6 energy covers a cost
+        // of 10 only 60% of the way, so 36 lands in one cycle. DeckAnalysis holds the cycle total;
+        // dividing it by cycle length happens when the figures are built for display.
         var deck = Enumerable.Repeat(Attack(6, 1), 10).ToList();
 
-        Assert.Equal(18.0, DeckAnalysis.Analyze(deck).AvgCycleDamage, 2);
+        Assert.Equal(36.0, DeckAnalysis.Analyze(deck).AvgCycleDamage, 2);
     }
 
     [Fact]
@@ -68,18 +94,23 @@ public class CycleEstimateTests
     {
         var deck = Enumerable.Repeat(Defend(6, 1), 10).ToList();
 
-        Assert.Equal(18.0, DeckAnalysis.Analyze(deck).AvgCycleMitigation, 2);
+        Assert.Equal(36.0, DeckAnalysis.Analyze(deck).AvgCycleMitigation, 2);
     }
 
     [Fact]
-    public void AddingCursesLowersTheEstimate()
+    public void AddingCursesLengthensTheCycleAndLowersTheFigure()
     {
-        // The point of averaging over a cycle: dead cards you must draw through really do cost you
-        // damage per turn, and a model that ignored deck size would miss that entirely.
+        // The reason cycle length is the denominator. A whole-cycle total is unmoved by curses,
+        // because over a full pass you still play every real card; only dividing by the now longer
+        // cycle makes deck bloat visible.
         var lean = Enumerable.Repeat(Attack(6, 1), 10).ToList();
         var bloated = lean.Concat(Enumerable.Repeat(TestData.Curse("Regret"), 10)).ToList();
 
-        Assert.True(DeckAnalysis.Analyze(bloated).AvgCycleDamage < DeckAnalysis.Analyze(lean).AvgCycleDamage);
+        var leanFigures = CycleFigures.From(DeckAnalysis.Analyze(lean), new RunStats());
+        var bloatedFigures = CycleFigures.From(DeckAnalysis.Analyze(bloated), new RunStats());
+
+        Assert.True(bloatedFigures.CycleTurns > leanFigures.CycleTurns);
+        Assert.True(bloatedFigures.Damage < leanFigures.Damage);
     }
 
     [Fact]
@@ -90,9 +121,8 @@ public class CycleEstimateTests
             .Concat(Enumerable.Repeat(TestData.Curse("Regret") with { EnergyCost = 3 }, 5))
             .ToList();
 
-        // 15 cards is 3 turns and 9 energy against a real cost of 10, so nearly all of it plays:
-        // 60 * 0.9 / 3 = 18.
-        Assert.Equal(18.0, DeckAnalysis.Analyze(withCurses).AvgCycleDamage, 1);
+        // 15 cards is 3 turns and 9 energy against a real cost of 10, so 90% of 60 lands.
+        Assert.Equal(54.0, DeckAnalysis.Analyze(withCurses).AvgCycleDamage, 1);
     }
 
     [Fact]
