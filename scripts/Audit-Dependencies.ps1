@@ -13,7 +13,7 @@
          when that happens the run is still gated by layer 1 and the gap is reported, not hidden.
 
     Also flags floating version ranges ("*", "1.2.*"), which let a future restore pull an
-    unreviewed version, and reports any project missing a lock file.
+    unreviewed version, and any project that asks for a lock file but has not committed one.
 
     Exits non-zero on any vulnerability, deprecated package, or floating version.
 
@@ -130,9 +130,13 @@ foreach ($project in $Projects) {
         if ($FailOnFloating) { $problems.Add($line) } else { $warnings.Add($line) }
     }
 
-    $lockFile = Join-Path (Split-Path $project -Parent) "packages.lock.json"
-    if (-not (Test-Path $lockFile)) {
-        $warnings.Add("NO LOCK   $project has no packages.lock.json; set RestorePackagesWithLockFile")
+    # Only projects that ask for a lock file are expected to have one. Some cannot keep one
+    # stable, and saying so in the project file is the declaration this check trusts.
+    if ($content -match '<RestorePackagesWithLockFile>\s*true\s*</RestorePackagesWithLockFile>') {
+        $lockFile = Join-Path (Split-Path $project -Parent) "packages.lock.json"
+        if (-not (Test-Path $lockFile)) {
+            $problems.Add("NO LOCK   $project sets RestorePackagesWithLockFile but has no packages.lock.json")
+        }
     }
 }
 
