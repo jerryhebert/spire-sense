@@ -37,8 +37,21 @@ public partial class SpireSenseOverlay : CanvasLayer
             return;
         }
 
-        _instance = new SpireSenseOverlay();
-        tree.Root.CallDeferred(Node.MethodName.AddChild, _instance);
+        // Mod initialization does not reliably run on the main thread, and constructing a Node off
+        // the main thread can crash the engine. Deferring puts both the construction and the tree
+        // insertion on the main thread during idle.
+        Callable.From(() =>
+        {
+            try
+            {
+                _instance = new SpireSenseOverlay();
+                tree.Root.AddChild(_instance);
+            }
+            catch (Exception ex)
+            {
+                ModLog.Error($"Overlay could not be added to the scene tree: {ex}");
+            }
+        }).CallDeferred();
     }
 
     public override void _Ready()
