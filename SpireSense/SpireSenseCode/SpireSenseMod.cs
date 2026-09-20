@@ -125,6 +125,7 @@ public static class SpireSenseMod
             "NInspectCardScreen.UpdateCardDisplay",
             "CreatureCmd.Damage",
             "CreatureCmd.GainBlock",
+            "CardPileCmd.DrawInternal",
         };
 
         var missing = expected.Where(e => !patched.Contains(e)).ToList();

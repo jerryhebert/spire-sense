@@ -107,7 +107,7 @@ public class DeckPowerTests
         var analysis = DeckAnalysis.Analyze(Array.Empty<CardFacts>());
         var power = new DeckPowerResult(62, "Block", HasData: true);
 
-        var text = OverlayText.Build(analysis, true, new CycleFigures(10, 5, 3, Measured: true), power);
+        var text = OverlayText.Build(analysis, true, new CycleFigures(10, 5, 3, 5.0, Measured: true), power);
 
         Assert.Contains("Power 62", text);
         Assert.Contains("held back by Block", text);
@@ -118,7 +118,7 @@ public class DeckPowerTests
     {
         var analysis = DeckAnalysis.Analyze(Array.Empty<CardFacts>());
 
-        var text = OverlayText.Build(analysis, true, new CycleFigures(0, 0, 0, Measured: false), default);
+        var text = OverlayText.Build(analysis, true, new CycleFigures(0, 0, 0, 5.0, Measured: false), default);
 
         Assert.Contains("measuring", text);
         Assert.DoesNotContain("Power 0", text);

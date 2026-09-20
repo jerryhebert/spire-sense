@@ -108,6 +108,7 @@ public static class OverlayText
         sb.Append("[table=3]");
         AppendRow(sb, "Damage:", CycleFigures.Format(cycle.Damage));
         AppendRow(sb, "Mitigation:", CycleFigures.Format(cycle.Mitigation));
+        AppendRow(sb, "Draw:", CycleFigures.FormatDraw(cycle.CardsDrawn));
         sb.Append("[/table]");
     }
 
