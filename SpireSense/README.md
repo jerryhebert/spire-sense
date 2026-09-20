@@ -17,12 +17,12 @@ counted separately and never contribute to a job.
 
 ## Using it
 
-- The panel shows on the combat screen, and on the screens where you choose a card to add to your
-  deck: the reward after a fight, and the card or bundle offered by Neow, an event or a shop. Those
-  are the moments the counts inform a decision.
-- It hides everywhere else: the settings menu, the map, your draw or discard pile, the deck view.
-  It asks the game which screen is topmost rather than keeping its own list, so screens added by a
-  future game update hide it correctly without a change here.
+- The panel shows nearly everywhere during a run: combat, the map, shops, events, rewards and the
+  deck view. It hides only on the menus that are not about the run in front of you, namely settings,
+  the compendium and the pause menu.
+- It asks the game which screen is topmost rather than keeping its own list, and the list it does
+  keep is of exclusions, so a screen added by a future game update shows the panel rather than
+  silently losing it.
 - **Insert** hides and shows it. Click and drag the panel to move it. Both are remembered.
 - To rebind, click the hotkey button on the panel and press any key. Escape cancels rather than
   binding, so Escape cannot be used as the hotkey. Insert is the default because the game and other
