@@ -12,7 +12,6 @@ public static class PanelScale
     /// <summary>Double size, i.e. 100% larger than designed.</summary>
     public const float Max = 2.0f;
 
-    public const float Step = 0.1f;
     public const float Default = 1.0f;
 
     /// <summary>Brings any value into range, including one from a hand-edited settings file.</summary>
@@ -26,14 +25,22 @@ public static class PanelScale
     }
 
     /// <summary>
-    /// Moves <paramref name="steps"/> increments from <paramref name="current"/>. Snaps to the step
-    /// grid so repeated clicks cannot accumulate floating point drift into values like 79.999%.
+    /// The scale implied by dragging a corner grip to a point <paramref name="offsetX"/>,
+    /// <paramref name="offsetY"/> from the panel's top-left, where the panel's unscaled size is
+    /// <paramref name="baseWidth"/> by <paramref name="baseHeight"/>.
+    ///
+    /// The larger of the two ratios wins, so dragging along either axis alone still resizes at full
+    /// rate rather than half. Returns <paramref name="fallback"/> if the panel has not been laid out
+    /// yet and has no size to measure against.
     /// </summary>
-    public static float Adjust(float current, int steps)
+    public static float FromDrag(float offsetX, float offsetY, float baseWidth, float baseHeight, float fallback)
     {
-        var raw = Clamp(current) + steps * Step;
-        var snapped = (float)Math.Round(raw / Step) * Step;
-        return Clamp(snapped);
+        if (baseWidth <= 0f || baseHeight <= 0f)
+        {
+            return Clamp(fallback);
+        }
+
+        return Clamp(Math.Max(offsetX / baseWidth, offsetY / baseHeight));
     }
 
     /// <summary>Renders a scale as a whole-number percentage, e.g. "120%".</summary>
