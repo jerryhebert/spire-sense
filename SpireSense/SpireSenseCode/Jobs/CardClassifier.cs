@@ -2,6 +2,8 @@ namespace SpireSense.SpireSenseCode.Jobs;
 
 public enum ClassificationSource
 {
+    /// <summary>You reclassified this card yourself; beats the shipped tables.</summary>
+    Override,
     /// <summary>Card is in the curated job tables.</summary>
     Curated,
     /// <summary>Card is not in the tables; jobs were guessed from its data.</summary>
@@ -13,8 +15,9 @@ public enum ClassificationSource
 public readonly record struct Classification(IReadOnlySet<Job> Jobs, ClassificationSource Source);
 
 /// <summary>
-/// Decides which jobs a card performs: curated table first, then a heuristic guess from the card's
-/// kind, target and values so cards added by game updates or other mods still count for something.
+/// Decides which jobs a card performs, in priority order: your own overrides, then the curated
+/// table, then a heuristic guess from the card's kind, target and values so cards added by game
+/// updates or other mods still count for something.
 /// </summary>
 public static class CardClassifier
 {
@@ -25,6 +28,12 @@ public static class CardClassifier
         if (card.Kind is CardKind.Status or CardKind.Curse)
         {
             return new Classification(NoJobs, ClassificationSource.Ignored);
+        }
+
+        // Your own decisions win over the shipped tables.
+        if (JobOverrides.TryGet(card.ClassName, out var overridden))
+        {
+            return new Classification(overridden, ClassificationSource.Override);
         }
 
         if (JobDatabase.TryGet(card.ClassName, out var curated))

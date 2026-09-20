@@ -1,7 +1,10 @@
 ﻿using System.Reflection;
+using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Logging;
+using Logger = MegaCrit.Sts2.Core.Logging.Logger;
 using MegaCrit.Sts2.Core.Modding;
+using SpireSense.SpireSenseCode.Game;
 using SpireSense.SpireSenseCode.Jobs;
 using SpireSense.SpireSenseCode.Overlay;
 
@@ -32,8 +35,19 @@ public static class SpireSenseMod
         ModLog.Current = new GameLog();
         ModLog.Info("Initializing Spire Sense");
 
+        OverlaySettings.LoadAsCurrent();
+
         JobDatabase.Load(Assembly.GetExecutingAssembly());
         ModLog.Info($"Loaded job classifications for {JobDatabase.CardCount} cards across {JobDatabase.PoolCount} pools");
+
+        // Your own reclassifications live next to the game's other user data so they survive
+        // reinstalling or updating the mod.
+        JobOverrides.FilePath = ProjectSettings.GlobalizePath("user://spiresense_overrides.json");
+        JobOverrides.Load();
+        if (JobOverrides.Count > 0)
+        {
+            ModLog.Info($"Applied {JobOverrides.Count} of your own card classifications");
+        }
         if (JobDatabase.Duplicates.Count > 0)
         {
             ModLog.Warn($"Duplicate card entries across job tables: {string.Join(", ", JobDatabase.Duplicates)}");
@@ -55,6 +69,10 @@ public static class SpireSenseMod
         _harmony.PatchAll(Assembly.GetExecutingAssembly());
 
         SpireSenseOverlay.Install();
+        if (!CardJobTip.IsAvailable)
+        {
+            ModLog.Warn("Card hover tips are unavailable: the HoverTip layout changed in this game build.");
+        }
         ModLog.Info("Spire Sense ready. Press F8 to toggle the overlay.");
     }
 }

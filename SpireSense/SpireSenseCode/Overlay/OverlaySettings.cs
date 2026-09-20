@@ -19,8 +19,19 @@ public sealed class OverlaySettings
     [JsonPropertyName("font_size")] public int FontSize { get; set; } = 20;
     [JsonPropertyName("toggle_key")] public string ToggleKey { get; set; } = "F8";
     [JsonPropertyName("show_card_names")] public bool ShowCardNames { get; set; } = true;
+    [JsonPropertyName("show_card_tips")] public bool ShowCardTips { get; set; } = true;
+
+    /// <summary>The settings in effect. Loaded once during mod initialization.</summary>
+    public static OverlaySettings Current { get; private set; } = new();
 
     public Key ParsedToggleKey => Enum.TryParse<Key>(ToggleKey, ignoreCase: true, out var key) ? key : Key.F8;
+
+    /// <summary>Loads settings from disk and publishes them as <see cref="Current"/>.</summary>
+    public static OverlaySettings LoadAsCurrent()
+    {
+        Current = Load();
+        return Current;
+    }
 
     public static OverlaySettings Load()
     {

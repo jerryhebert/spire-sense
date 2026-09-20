@@ -59,7 +59,7 @@ public partial class SpireSenseOverlay : CanvasLayer
         Name = "SpireSenseOverlay";
         Layer = 100;
         ProcessMode = ProcessModeEnum.Always;
-        _settings = OverlaySettings.Load();
+        _settings = OverlaySettings.Current;
 
         _panel = new PanelContainer
         {
