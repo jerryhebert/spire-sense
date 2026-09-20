@@ -194,7 +194,7 @@ public partial class SpireSenseOverlay : CanvasLayer
     {
         // Checked every frame, not on the poll interval, so the panel disappears the instant a
         // screen opens over combat rather than a visible fraction of a second later.
-        _panel.Visible = _hasDeck && ScreenAccess.IsOnCombatScreen;
+        _panel.Visible = _hasDeck && ScreenAccess.ShouldShowOverlay;
 
         _pollAccumulator += delta;
         if (_pollAccumulator < PollIntervalSeconds)

@@ -17,8 +17,10 @@ counted separately and never contribute to a job.
 
 ## Using it
 
-- The panel shows only while you are on the combat screen, and hides whenever anything opens over
-  it: the settings menu, the map, your draw or discard pile, a card reward, an event, the deck view.
+- The panel shows on the combat screen, and on the screens where you choose a card to add to your
+  deck: the reward after a fight, and the card or bundle offered by Neow, an event or a shop. Those
+  are the moments the counts inform a decision.
+- It hides everywhere else: the settings menu, the map, your draw or discard pile, the deck view.
   It asks the game which screen is topmost rather than keeping its own list, so screens added by a
   future game update hide it correctly without a change here.
 - **Insert** hides and shows it. Click and drag the panel to move it. Both are remembered.
