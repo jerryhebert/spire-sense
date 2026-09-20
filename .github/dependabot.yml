@@ -1,0 +1,21 @@
+version: 2
+
+# Dependency updates arrive as reviewable pull requests rather than being picked up silently by a
+# restore. Pairs with the pinned versions and lock files in the project files.
+updates:
+  - package-ecosystem: nuget
+    directory: /tests/SpireSense.Tests
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: nuget
+    directory: /SpireSense
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

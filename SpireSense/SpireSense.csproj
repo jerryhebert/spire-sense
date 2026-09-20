@@ -13,6 +13,16 @@
     </PropertyGroup>
 
     <PropertyGroup>
+        <!-- Supply-chain controls. NuGetAudit checks every direct and transitive package against the
+             GitHub Advisory Database during restore; the lock file records the exact resolved graph
+             so any change to a transitive dependency shows up in review. See scripts/Audit-Dependencies.ps1. -->
+        <NuGetAudit>true</NuGetAudit>
+        <NuGetAuditMode>all</NuGetAuditMode>
+        <NuGetAuditLevel>low</NuGetAuditLevel>
+        <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    </PropertyGroup>
+
+    <PropertyGroup>
         <!-- Diasble architecture mismatch warning; mods are ideally built for all platforms (MSIL)
              while your local StS2 version will be for your specific platform. -->
         <NoWarn>$(NoWarn);MSB3270</NoWarn> 
@@ -35,7 +45,9 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Alchyr.Sts2.ModAnalyzers" Version="*" />
+        <!-- Pinned rather than floating: this analyzer executes during every build, so a new version
+             should be an explicit, reviewed change rather than something restore picks up silently. -->
+        <PackageReference Include="Alchyr.Sts2.ModAnalyzers" Version="0.1.9" />
         <!-- Generates a .pck file when building if only using simple assets. May not work on all setups. Uncomment to test. -->
         <!-- <PackageReference Include="BSchneppe.StS2.PckPacker" Version="0.1.1" PrivateAssets="All" /> -->
         <AdditionalFiles Include="SpireSense/localization/**/*.json"/> <!-- Used by analyzer -->
@@ -66,9 +78,12 @@
     </ItemGroup>
     
     <Target Name="CheckDependencyPaths" >
+        <!-- Compiling needs the game's assemblies, but restoring does not. Letting restore succeed
+             without the game is what allows CI (and the dependency audit) to run on a machine that
+             has no Slay the Spire 2 installed. -->
         <Error
                 Text=" Slay the Spire 2 data not found at path '$(Sts2DataDir)'"
-                Condition="'$(Sts2DataDir)' == '' or !Exists('$(Sts2DataDir)')" />
+                Condition="'$(MSBuildIsRestoring)' != 'true' and ('$(Sts2DataDir)' == '' or !Exists('$(Sts2DataDir)'))" />
     </Target>
 
     <Target Name="CopyToModsFolderOnBuild" AfterTargets="PostBuildEvent">

@@ -1,4 +1,4 @@
-using Godot;
+﻿using Godot;
 using SpireSense.SpireSenseCode.Game;
 using SpireSense.SpireSenseCode.Jobs;
 
@@ -21,6 +21,7 @@ public partial class SpireSenseOverlay : CanvasLayer
     private DeckAnalysis? _lastAnalysis;
     private bool _dragging;
     private bool _positionDirty;
+    private string? _lastErrorMessage;
 
     /// <summary>Adds the overlay to the scene tree. Safe to call from mod initialization.</summary>
     public static void Install()
@@ -32,7 +33,7 @@ public partial class SpireSenseOverlay : CanvasLayer
 
         if (Engine.GetMainLoop() is not SceneTree tree)
         {
-            SpireSenseMod.Logger.Error("No SceneTree available; overlay not installed.");
+            ModLog.Error("No SceneTree available; overlay not installed.");
             return;
         }
 
@@ -91,7 +92,7 @@ public partial class SpireSenseOverlay : CanvasLayer
 
         Visible = _settings.Visible;
         _panel.Visible = false; // Stays hidden until a run is in progress.
-        SpireSenseMod.Logger.Info($"Overlay installed (visible={_settings.Visible}, toggle={_settings.ParsedToggleKey}).");
+        ModLog.Info($"Overlay installed (visible={_settings.Visible}, toggle={_settings.ParsedToggleKey}).");
     }
 
     public override void _UnhandledKeyInput(InputEvent @event)
@@ -135,18 +136,23 @@ public partial class SpireSenseOverlay : CanvasLayer
                 return;
             }
 
-            var analysis = DeckAnalysis.Analyze(deck);
+            var analysis = DeckAnalysis.Analyze(deck.Select(CardFactsReader.Read));
             if (_lastAnalysis == null || !analysis.Equals(_lastAnalysis))
             {
                 _lastAnalysis = analysis;
-                _label.Text = OverlayText.Build(analysis, _settings);
+                _label.Text = OverlayText.Build(analysis, _settings.ToggleKey, _settings.ShowCardNames);
             }
             _panel.Visible = true;
         }
         catch (Exception ex)
         {
-            // Never let an overlay bug interrupt the game loop; log once per change of message.
-            SpireSenseMod.Logger.Warn($"Overlay update failed: {ex.Message}");
+            // Never let an overlay bug interrupt the game loop. This runs four times a second, so
+            // only log when the message changes; otherwise a recurring fault would flood the log.
+            if (_lastErrorMessage != ex.Message)
+            {
+                _lastErrorMessage = ex.Message;
+                ModLog.Warn($"Overlay update failed: {ex.Message}");
+            }
         }
     }
 

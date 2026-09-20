@@ -1,0 +1,40 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Tests the mod's pure logic. It deliberately does NOT reference the mod project: that project
+    targets the Godot SDK and links the game's assemblies, which cannot load outside the game.
+    Instead the engine-independent source files are compiled into this project directly, and the
+    same job tables are embedded under the same resource names the loader looks for.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>SpireSense.Tests</RootNamespace>
+    <!-- Supply-chain controls; see scripts/Audit-Dependencies.ps1. -->
+    <NuGetAudit>true</NuGetAudit>
+    <NuGetAuditMode>all</NuGetAuditMode>
+    <NuGetAuditLevel>low</NuGetAuditLevel>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="../../SpireSense/SpireSenseCode/Jobs/*.cs" Link="Linked/Jobs/%(Filename)%(Extension)" />
+    <Compile Include="../../SpireSense/SpireSenseCode/Overlay/OverlayText.cs" Link="Linked/Overlay/OverlayText.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="../../SpireSense/SpireSenseCode/Data/*.json" LogicalName="SpireSense.Data.%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
+    <PackageReference Include="xunit.v3" Version="4.0.1" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="4.0.0" />
+    <!-- Microsoft.NET.Test.Sdk drags in a deprecated 5.0.0 of this package; pin it forward so the
+         dependency audit stays clean. Remove once the test SDK stops referencing the old version. -->
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="10.0.12" />
+  </ItemGroup>
+
+</Project>

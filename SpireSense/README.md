@@ -24,6 +24,19 @@ counted separately and never contribute to a job.
 - Cards the mod has no table entry for are classified by a rough heuristic and shown as
   "(N guessed)" plus a "Guessed:" list. Cards where even the heuristic finds nothing appear under "No job:".
 
+## Code layout
+
+| Folder | Depends on the game? | Contents |
+|---|---|---|
+| `SpireSenseCode/Jobs/` | no | Job definitions, the curated table loader, the classifier, deck counting |
+| `SpireSenseCode/Overlay/OverlayText.cs` | no | Panel text formatting |
+| `SpireSenseCode/Overlay/` (rest) | yes | The Godot node, settings persistence |
+| `SpireSenseCode/Game/` | yes | Reading the current run and copying card data out of the game's models |
+
+The split is deliberate. `CardFacts` is a plain snapshot of the handful of values a card contributes,
+so the classification logic never touches a game type and can be unit-tested. `Game/CardFactsReader.cs`
+is the only file that knows how to read the game's card model.
+
 ## How classification works
 
 - `SpireSenseCode/Data/jobs.<pool>.json` holds one curated entry per card, keyed by the card's C# class
@@ -35,7 +48,10 @@ counted separately and never contribute to a job.
 - The tables were produced by reading each card's decompiled implementation against the job
   definitions above. Judgment calls are recorded in each card's `note`.
 
-## Building
+## Building and testing
+
+From the repository root, `pwsh ./scripts/Run-Checks.ps1` runs the tests, the dependency audit and a
+Release build. Tests alone: `dotnet test tests/SpireSense.Tests/SpireSense.Tests.csproj`.
 
 Open `SpireSense.sln` in Rider and Build, or run `dotnet build -c Release` in this folder.
 The build copies `SpireSense.dll`, `.pdb` and `.json` into the game's `mods\SpireSense\` folder.
