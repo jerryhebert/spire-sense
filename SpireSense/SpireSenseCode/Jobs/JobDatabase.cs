@@ -121,4 +121,6 @@ public static class JobDatabase
 
     public static bool TryGet(string cardClassName, out IReadOnlySet<Job> jobs) =>
         ByClassName.TryGetValue(cardClassName, out jobs!);
+
+    public static bool Has(string cardClassName) => ByClassName.ContainsKey(cardClassName);
 }

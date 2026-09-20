@@ -16,6 +16,14 @@ The panel appears once a run is in progress and updates as your deck changes. **
 you can drag it anywhere; both are remembered. A card can count toward several jobs. Upgrades do not
 change a card's jobs. Curses and statuses are counted separately and never contribute to a job.
 
+**Hovering any card** adds a Spire Sense line to its tooltip naming the jobs it counts for, and says
+when a classification was guessed rather than curated.
+
+**Disagree with a verdict?** Open any card in the inspect view, from the Compendium or from a run,
+and a panel appears with a toggle per job. Your choice is saved to
+`%APPDATA%\SlayTheSpire2\spiresense_overrides.json` and takes priority over the shipped tables, so
+it survives mod updates. Reset returns the card to the shipped classification.
+
 All 519 cards across the Ironclad, Silent, Defect, Necrobinder, Regent and Colorless pools are
 hand-classified, each with a one-line rationale. See [SpireSense/README.md](SpireSense/README.md) for
 how classification works and how to change a verdict.

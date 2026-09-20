@@ -31,13 +31,21 @@ counted separately and never contribute to a job.
 | `SpireSenseCode/Jobs/` | no | Job definitions, the curated table loader, the classifier, deck counting |
 | `SpireSenseCode/Overlay/OverlayText.cs` | no | Panel text formatting |
 | `SpireSenseCode/Overlay/` (rest) | yes | The Godot node, settings persistence |
-| `SpireSenseCode/Game/` | yes | Reading the current run and copying card data out of the game's models |
+| `SpireSenseCode/Game/` | yes | Reading the current run, copying card data out of the game's models, and the hover-tip and inspect-screen patches |
 
 The split is deliberate. `CardFacts` is a plain snapshot of the handful of values a card contributes,
 so the classification logic never touches a game type and can be unit-tested. `Game/CardFactsReader.cs`
 is the only file that knows how to read the game's card model.
 
 ## How classification works
+
+Three sources, in priority order:
+
+1. **Your own overrides**, from the inspect-screen panel, stored in
+   `%APPDATA%\SlayTheSpire2\spiresense_overrides.json`. An override with an empty job list is
+   meaningful: it means "this card does no job". Deleting the file reverts everything.
+2. **The curated tables** below.
+3. **A heuristic**, for cards no table knows about.
 
 - `SpireSenseCode/Data/jobs.<pool>.json` holds one curated entry per card, keyed by the card's C# class
   name in the game assembly (e.g. `PommelStrike`). Each entry has a `jobs` array and a `note`.
