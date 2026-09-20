@@ -36,7 +36,13 @@ counted separately and never contribute to a job.
   or rebind): `visible`, `x`, `y`, `font_size`, `scale`, `editor_x`, `editor_y`, `toggle_key` (any
   Godot `Key` name), `show_card_names`, `show_card_tips`. Delete the file to reset everything, which
   is the way out if you ever hide the panel and bind the hotkey to something another mod has taken.
-- Below a divider, a **Cycle** section giving damage and mitigation per turn.
+- Below a divider, a **Cycle** section giving damage and mitigation over one whole pass through the
+  deck. Cycle length is deck size divided by cards drawn per turn, fractionally: 15 cards at 5 draw
+  is 3 turns, 15 cards at 7 draw is 15/7. The draw figure is read from the game, so relics and
+  powers that change it shorten or lengthen the cycle correctly.
+  - Note what a whole-cycle total does and does not show. Over one pass you still play every real
+    card, so curses do not lower it; what they cost you is turns. Cycle length going up is the
+    signal that the deck has slowed down.
   - Once you have played a turn these are **measured from the run so far**: every point of damage
     dealt to enemies and every point of block gained, averaged over the turns played. They get
     steadier as the run goes on, and reset when a new run starts.

@@ -7,10 +7,23 @@ namespace SpireSense.SpireSenseCode.Jobs;
 /// </summary>
 public readonly record struct CycleFigures(double Damage, double Mitigation, bool Measured)
 {
-    public static CycleFigures From(DeckAnalysis analysis, RunStats stats) =>
-        stats.HasData
-            ? new CycleFigures(stats.DamagePerTurn, stats.MitigationPerTurn, Measured: true)
-            : new CycleFigures(analysis.AvgCycleDamage, analysis.AvgCycleMitigation, Measured: false);
+    /// <summary>
+    /// Both sources are converted to one whole pass through the deck. Measured rates are per turn,
+    /// so they are multiplied by the cycle length; the deck estimate is already a whole-deck total.
+    /// </summary>
+    public static CycleFigures From(DeckAnalysis analysis, RunStats stats)
+    {
+        if (!stats.HasData)
+        {
+            return new CycleFigures(analysis.AvgCycleDamage, analysis.AvgCycleMitigation, Measured: false);
+        }
+
+        var draw = stats.CardsDrawnPerTurn;
+        return new CycleFigures(
+            CycleEstimate.FromPerTurn(stats.DamagePerTurn, analysis.TotalCards, draw),
+            CycleEstimate.FromPerTurn(stats.MitigationPerTurn, analysis.TotalCards, draw),
+            Measured: true);
+    }
 
     /// <summary>Whole numbers: these are rough figures and a decimal implies precision they lack.</summary>
     public static string Format(double value) => Math.Round(value, MidpointRounding.AwayFromZero).ToString("0");

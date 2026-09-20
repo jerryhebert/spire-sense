@@ -128,9 +128,11 @@ public class RunStatsTests
 
         var figures = CycleFigures.From(analysis, stats);
 
+        // Measured rates are per turn and the panel shows whole cycles, so a 10 card deck at the
+        // base 5 draw is a 2 turn cycle and the rates are doubled.
         Assert.True(figures.Measured);
-        Assert.Equal(41, figures.Damage, 3);
-        Assert.Equal(23, figures.Mitigation, 3);
+        Assert.Equal(82, figures.Damage, 3);
+        Assert.Equal(46, figures.Mitigation, 3);
     }
 
     [Fact]
