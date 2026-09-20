@@ -11,7 +11,7 @@ public class OverlayTextTests
     private static string Render(IEnumerable<CardFacts> deck, bool showCardNames = true)
     {
         var analysis = DeckAnalysis.Analyze(deck);
-        return OverlayText.Build(analysis, showCardNames, CycleFigures.From(analysis, new RunStats()));
+        return OverlayText.Build(analysis, showCardNames, CycleFigures.From(analysis, new RunStats()), default);
     }
 
     [Fact]
@@ -32,7 +32,7 @@ public class OverlayTextTests
     {
         // The rebind button under the counts shows the current key, so the header must not
         // duplicate it and go stale after a rebind.
-        var text = OverlayText.Build(DeckAnalysis.Empty, showCardNames: true, CycleFigures.From(DeckAnalysis.Empty, new RunStats()));
+        var text = OverlayText.Build(DeckAnalysis.Empty, showCardNames: true, CycleFigures.From(DeckAnalysis.Empty, new RunStats()), default);
 
         Assert.Contains("0 cards", text);
         Assert.DoesNotContain("hides", text);
@@ -58,7 +58,7 @@ public class OverlayTextTests
 
         var cursesAt = text.IndexOf("Curses / Status", StringComparison.Ordinal);
         var dividerAt = text.IndexOf('─');
-        var estimatesAt = text.IndexOf("Cycle", StringComparison.Ordinal);
+        var estimatesAt = text.IndexOf("Per turn", StringComparison.Ordinal);
 
         Assert.InRange(cursesAt, 0, dividerAt);
         Assert.InRange(dividerAt, 0, estimatesAt);

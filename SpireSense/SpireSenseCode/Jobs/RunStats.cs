@@ -19,6 +19,9 @@ public sealed class RunStats
     /// <summary>Block gained.</summary>
     public double TotalMitigation { get; private set; }
 
+    /// <summary>Damage enemies actually landed on you, which is what block has to keep up with.</summary>
+    public double TotalDamageTaken { get; private set; }
+
     /// <summary>Distinct combat turns seen, which is what the totals are averaged over.</summary>
     public int TurnsObserved { get; private set; }
 
@@ -44,6 +47,8 @@ public sealed class RunStats
     public double DamagePerTurn => TurnsObserved == 0 ? 0 : TotalDamage / TurnsObserved;
 
     public double MitigationPerTurn => TurnsObserved == 0 ? 0 : TotalMitigation / TurnsObserved;
+
+    public double DamageTakenPerTurn => TurnsObserved == 0 ? 0 : TotalDamageTaken / TurnsObserved;
 
     /// <summary>
     /// Registers the turn currently being played. Called every frame with a key identifying the
@@ -72,6 +77,14 @@ public sealed class RunStats
         if (amount > 0)
         {
             TotalMitigation += amount;
+        }
+    }
+
+    public void AddDamageTaken(double amount)
+    {
+        if (amount > 0)
+        {
+            TotalDamageTaken += amount;
         }
     }
 

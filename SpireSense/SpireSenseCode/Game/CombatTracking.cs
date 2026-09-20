@@ -35,7 +35,7 @@ public static class CombatTracking
     {
         try
         {
-            if (__result == null || !IsMine(dealer))
+            if (__result == null)
             {
                 return;
             }
@@ -48,7 +48,7 @@ public static class CombatTracking
                 {
                     if (task.IsCompletedSuccessfully)
                     {
-                        Accumulate(task.Result);
+                        Accumulate(dealer, task.Result);
                     }
                 },
                 TaskContinuationOptions.ExecuteSynchronously);
@@ -86,27 +86,44 @@ public static class CombatTracking
         return ReferenceEquals(creature.Player, me) || ReferenceEquals(creature.PetOwner, me);
     }
 
-    private static void Accumulate(IEnumerable<DamageResult>? results)
+    /// <summary>
+    /// Sorts one damage call into what you dealt and what was dealt to you. Both directions matter:
+    /// block is only adequate relative to the damage actually coming at you, and that cannot be
+    /// read from enemy data, only watched.
+    /// </summary>
+    private static void Accumulate(Creature? dealer, IEnumerable<DamageResult>? results)
     {
         if (results == null)
         {
             return;
         }
 
+        var fromMe = IsMine(dealer);
+        var fromEnemy = dealer is { IsEnemy: true };
+
         double dealt = 0;
+        double taken = 0;
+
         foreach (var result in results)
         {
-            if (result.Receiver is not { IsEnemy: true })
-            {
-                continue;
-            }
-
             // UnblockedDamage includes overkill, so subtracting it leaves the HP actually
             // removed. Hitting a 5 HP enemy for 30 should count as 5, not 30.
-            dealt += Math.Max(0, result.UnblockedDamage - result.OverkillDamage);
+            var landed = Math.Max(0, result.UnblockedDamage - result.OverkillDamage);
+
+            if (fromMe && result.Receiver is { IsEnemy: true })
+            {
+                dealt += landed;
+            }
+            else if (fromEnemy && IsMine(result.Receiver))
+            {
+                // Only enemy damage counts as incoming. Self-damage from your own cards is a cost
+                // you chose, not pressure block has to answer.
+                taken += landed;
+            }
         }
 
         RunStats.Current.AddDamage(dealt);
+        RunStats.Current.AddDamageTaken(taken);
     }
 
     /// <summary>

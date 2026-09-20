@@ -10,6 +10,7 @@ public static class OverlayText
     private const string Dim = "#9a9a9a";
     private const string Warn = "#e08a5a";
     private const string Divider = "#5a5a5a";
+    private const string Good = "#8fbf6f";
 
     /// <summary>How many card names are listed before the rest are elided.</summary>
     public const int MaxListedNames = 6;
@@ -20,17 +21,43 @@ public static class OverlayText
     private const char DividerChar = '─';
     private const int DividerWidth = 34;
 
-    public static string Build(DeckAnalysis a, bool showCardNames, CycleFigures cycle)
+    public static string Build(DeckAnalysis a, bool showCardNames, CycleFigures cycle, DeckPowerResult power)
     {
         var sb = new StringBuilder();
         sb.Append($"[b][color={Gold}]Spire Sense[/color][/b]  [color={Dim}]{a.TotalCards} cards[/color]\n");
 
+        AppendPower(sb, power);
         AppendJobCounts(sb, a);
         AppendDivider(sb);
         AppendCycle(sb, cycle);
         AppendFootnotes(sb, a, showCardNames);
 
         return sb.ToString();
+    }
+
+    /// <summary>
+    /// The headline number, and the job holding it back. The limiting job is the actionable half:
+    /// it says what to draft, where the score alone says only how worried to be.
+    /// </summary>
+    private static void AppendPower(StringBuilder sb, DeckPowerResult power)
+    {
+        if (!power.HasData)
+        {
+            sb.Append($"[color={Dim}]Power: measuring…[/color]");
+            sb.Append('\n');
+            return;
+        }
+
+        var colour = power.Score switch
+        {
+            >= 80 => Good,
+            >= 50 => Gold,
+            _ => Warn,
+        };
+
+        sb.Append($"[b][color={colour}]Power {power.Score}[/color][/b]");
+        sb.Append($"  [color={Dim}]held back by {Escape(power.LimitedBy)}[/color]");
+        sb.Append('\n');
     }
 
     /// <summary>
@@ -63,14 +90,14 @@ public static class OverlayText
     /// <summary>
     /// What the deck does per turn: measured from this run once a turn has been played, and
     /// predicted from the deck until then. The estimate is marked so the two are never confused.
+    ///
+    /// Per turn rather than per cycle on purpose. A cycle total is a moving target, because the
+    /// cycle lengthens every time the deck grows, so the same figure means something different in
+    /// Act 3 than it did in Act 1. A per-turn rate stays comparable across the whole run.
     /// </summary>
     private static void AppendCycle(StringBuilder sb, CycleFigures cycle)
     {
-        sb.Append($"[b][color={Gold}]Cycle[/color][/b]");
-
-        // Cycle length is shown because it is the denominator: when it climbs, the deck has slowed,
-        // and that is the part of a curse's cost the damage figure alone would not explain.
-        sb.Append($"  [color={Dim}]{CycleFigures.FormatTurns(cycle.CycleTurns)} turns[/color]");
+        sb.Append($"[b][color={Gold}]Per turn[/color][/b]");
 
         if (!cycle.Measured)
         {
