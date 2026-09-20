@@ -1,0 +1,12 @@
+{
+  "id": "SpireSense",
+  "name": "Spire Sense",
+  "author": "jerry",
+  "description": "In-run overlay that counts how many cards in your deck do each deckbuilding job: frontloaded damage, AoE, frontloaded block, scaling and card draw. Toggle with F8, drag to move.",
+  "version": "v0.1.0",
+  "min_game_version": "0.111.0",
+  "has_pck": false,
+  "has_dll": true,
+  "dependencies": [],
+  "affects_gameplay": false
+}
