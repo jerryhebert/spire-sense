@@ -9,7 +9,12 @@ namespace SpireSense.SpireSenseCode.Game;
 /// <summary>
 /// Attaches the reclassification panel to the card inspect screen, the one reached from the
 /// Compendium and from viewing a card during a run, and keeps it pointed at the card on show.
+///
+/// The bare [HarmonyPatch] on the class is load-bearing: Harmony's PatchAll only looks at types
+/// that carry a Harmony attribute on the type itself, so a class with attributes on its methods
+/// alone is skipped without any error.
 /// </summary>
+[HarmonyPatch]
 public static class InspectScreenPatch
 {
     private const string PanelName = "SpireSenseJobEditor";
