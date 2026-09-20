@@ -33,20 +33,20 @@ public class CycleEstimateTests
     }
 
     [Fact]
-    public void AMeasuredRateIsMultipliedOutToAWholeCycle()
+    public void ACycleTotalIsSpreadAcrossTheTurnsItTakes()
     {
-        // 36 damage a turn with a 15 card deck at 5 draw is 3 turns, so 108 over a cycle.
-        Assert.Equal(108, CycleEstimate.FromPerTurn(36, deckSize: 15, cardsDrawnPerTurn: 5), 3);
+        // 108 damage over a 3 turn cycle is 36 a turn.
+        Assert.Equal(36, CycleEstimate.PerTurnOfCycle(108, cycleTurns: 3), 3);
     }
 
     [Fact]
-    public void MoreDrawShortensTheCycleAndSoLowersTheCycleTotal()
+    public void MoreDrawShortensTheCycleAndSoRaisesTheFigure()
     {
-        var atFive = CycleEstimate.FromPerTurn(36, deckSize: 15, cardsDrawnPerTurn: 5);
-        var atSeven = CycleEstimate.FromPerTurn(36, deckSize: 15, cardsDrawnPerTurn: 7);
+        var atFive = CycleEstimate.PerTurnOfCycle(108, CycleEstimate.TurnsPerCycle(15, 5));
+        var atSeven = CycleEstimate.PerTurnOfCycle(108, CycleEstimate.TurnsPerCycle(15, 7));
 
-        Assert.True(atSeven < atFive);
-        Assert.Equal(36 * (15.0 / 7), atSeven, 3);
+        // Drawing more gets through the same deck in fewer turns, so each turn does more.
+        Assert.True(atSeven > atFive);
     }
 
     [Fact]
@@ -82,7 +82,8 @@ public class CycleEstimateTests
     public void TheEstimateIsTheWholeDeckThrottledByEnergy()
     {
         // 10 attacks of 6 for 1 energy: 60 damage over a 2 turn cycle, but 6 energy covers a cost
-        // of 10 only 60% of the way, so 36 lands in one cycle.
+        // of 10 only 60% of the way, so 36 lands in one cycle. DeckAnalysis holds the cycle total;
+        // dividing it by cycle length happens when the figures are built for display.
         var deck = Enumerable.Repeat(Attack(6, 1), 10).ToList();
 
         Assert.Equal(36.0, DeckAnalysis.Analyze(deck).AvgCycleDamage, 2);
@@ -97,21 +98,19 @@ public class CycleEstimateTests
     }
 
     [Fact]
-    public void CursesLengthenTheCycleRatherThanReducingItsTotal()
+    public void AddingCursesLengthensTheCycleAndLowersTheFigure()
     {
-        // A consequence of measuring whole cycles rather than turns, and worth pinning so nobody
-        // "fixes" it later: over one full pass you still draw and play every real card, so the
-        // damage in a cycle does not fall. What curses cost you is time. They make the cycle take
-        // more turns, which is exactly what a per-turn figure would have shown instead.
+        // The reason cycle length is the denominator. A whole-cycle total is unmoved by curses,
+        // because over a full pass you still play every real card; only dividing by the now longer
+        // cycle makes deck bloat visible.
         var lean = Enumerable.Repeat(Attack(6, 1), 10).ToList();
         var bloated = lean.Concat(Enumerable.Repeat(TestData.Curse("Regret"), 10)).ToList();
 
-        var leanAnalysis = DeckAnalysis.Analyze(lean);
-        var bloatedAnalysis = DeckAnalysis.Analyze(bloated);
+        var leanFigures = CycleFigures.From(DeckAnalysis.Analyze(lean), new RunStats());
+        var bloatedFigures = CycleFigures.From(DeckAnalysis.Analyze(bloated), new RunStats());
 
-        Assert.True(bloatedAnalysis.AvgCycleDamage >= leanAnalysis.AvgCycleDamage);
-        Assert.True(CycleEstimate.TurnsPerCycle(bloatedAnalysis.TotalCards)
-            > CycleEstimate.TurnsPerCycle(leanAnalysis.TotalCards));
+        Assert.True(bloatedFigures.CycleTurns > leanFigures.CycleTurns);
+        Assert.True(bloatedFigures.Damage < leanFigures.Damage);
     }
 
     [Fact]

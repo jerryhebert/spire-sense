@@ -59,7 +59,11 @@ public static class CycleEstimate
         return deckTotal * PlayableFraction(deckSize, totalEnergyCost, cardsDrawnPerTurn);
     }
 
-    /// <summary>Converts a measured per-turn rate into what it amounts to over one cycle.</summary>
-    public static double FromPerTurn(double perTurn, int deckSize, double cardsDrawnPerTurn = BaseCardsDrawnPerTurn) =>
-        perTurn <= 0 ? 0 : perTurn * TurnsPerCycle(deckSize, cardsDrawnPerTurn);
+    /// <summary>
+    /// Spreads a whole-cycle total across the turns that cycle takes. Adding dead cards lengthens
+    /// the cycle without adding to the total, so this is where deck bloat shows up as a smaller
+    /// number.
+    /// </summary>
+    public static double PerTurnOfCycle(double cycleTotal, double cycleTurns) =>
+        cycleTurns <= 0 || cycleTotal <= 0 ? 0 : cycleTotal / cycleTurns;
 }
