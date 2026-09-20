@@ -42,7 +42,23 @@ public class OverlayTextTests
         var cursed = Render(new[] { CardFacts.Named("StrikeIronclad", CardKind.Attack), TestData.Curse("Regret") });
 
         Assert.DoesNotContain("Curses / Status", clean);
-        Assert.Contains("Curses / Status: 1", cursed);
+        Assert.Contains("Curses / Status", cursed);
+        Assert.Contains("50% (1)", cursed);
+    }
+
+    [Fact]
+    public void CursesAreCountedWithTheDeckNotWithTheEstimates()
+    {
+        // They describe what the deck contains, so they belong above the divider with the job
+        // counts rather than below it with what the deck does.
+        var text = Render(new[] { CardFacts.Named("StrikeIronclad", CardKind.Attack), TestData.Curse("Regret") });
+
+        var cursesAt = text.IndexOf("Curses / Status", StringComparison.Ordinal);
+        var dividerAt = text.IndexOf('─');
+        var estimatesAt = text.IndexOf("Avg cycle damage", StringComparison.Ordinal);
+
+        Assert.InRange(cursesAt, 0, dividerAt);
+        Assert.InRange(dividerAt, 0, estimatesAt);
     }
 
     [Fact]
