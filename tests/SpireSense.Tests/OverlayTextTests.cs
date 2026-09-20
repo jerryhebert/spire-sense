@@ -58,7 +58,7 @@ public class OverlayTextTests
 
         var cursesAt = text.IndexOf("Curses / Status", StringComparison.Ordinal);
         var dividerAt = text.IndexOf('─');
-        var estimatesAt = text.IndexOf("Cycle", StringComparison.Ordinal);
+        var estimatesAt = text.IndexOf("Per turn", StringComparison.Ordinal);
 
         Assert.InRange(cursesAt, 0, dividerAt);
         Assert.InRange(dividerAt, 0, estimatesAt);
