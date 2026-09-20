@@ -17,6 +17,8 @@ public partial class SpireSenseOverlay : CanvasLayer
     private OverlaySettings _settings = new();
     private PanelContainer _panel = null!;
     private RichTextLabel _label = null!;
+    private Button _hotkeyButton = null!;
+    private bool _capturingHotkey;
     private double _pollAccumulator;
     private DeckAnalysis? _lastAnalysis;
     private bool _dragging;
@@ -100,7 +102,21 @@ public partial class SpireSenseOverlay : CanvasLayer
         _label.AddThemeFontSizeOverride("normal_font_size", _settings.FontSize);
         _label.AddThemeFontSizeOverride("bold_font_size", _settings.FontSize);
 
-        _panel.AddChild(_label);
+        _hotkeyButton = new Button
+        {
+            Name = "Hotkey",
+            FocusMode = Control.FocusModeEnum.None,
+            MouseFilter = Control.MouseFilterEnum.Stop,
+        };
+        _hotkeyButton.AddThemeFontSizeOverride("font_size", Math.Max(12, _settings.FontSize - 5));
+        _hotkeyButton.Pressed += BeginHotkeyCapture;
+        UpdateHotkeyButton();
+
+        var column = new VBoxContainer { Name = "Column" };
+        column.AddThemeConstantOverride("separation", 6);
+        column.AddChild(_label);
+        column.AddChild(_hotkeyButton);
+        _panel.AddChild(column);
         AddChild(_panel);
 
         Visible = _settings.Visible;
@@ -110,13 +126,51 @@ public partial class SpireSenseOverlay : CanvasLayer
 
     public override void _UnhandledKeyInput(InputEvent @event)
     {
-        if (@event is InputEventKey key && key.Pressed && !key.Echo && key.Keycode == _settings.ParsedToggleKey)
+        if (@event is not InputEventKey key || !key.Pressed || key.Echo)
+        {
+            return;
+        }
+
+        if (_capturingHotkey)
+        {
+            CompleteHotkeyCapture(key.Keycode);
+            GetViewport().SetInputAsHandled();
+            return;
+        }
+
+        if (key.Keycode == _settings.ParsedToggleKey)
         {
             Visible = !Visible;
             _settings.Visible = Visible;
             _settings.Save();
             GetViewport().SetInputAsHandled();
         }
+    }
+
+    private void BeginHotkeyCapture()
+    {
+        _capturingHotkey = true;
+        _hotkeyButton.Text = "Press any key…  (Esc cancels)";
+    }
+
+    private void CompleteHotkeyCapture(Key keycode)
+    {
+        _capturingHotkey = false;
+
+        // Escape means cancel, so it cannot itself be bound. Everything else is fair game.
+        if (keycode != Key.Escape)
+        {
+            _settings.ToggleKey = keycode.ToString();
+            _settings.Save();
+            ModLog.Info($"Overlay hotkey rebound to {_settings.ToggleKeyLabel}");
+        }
+
+        UpdateHotkeyButton();
+    }
+
+    private void UpdateHotkeyButton()
+    {
+        _hotkeyButton.Text = $"Hide with: {_settings.ToggleKeyLabel}  (click to change)";
     }
 
     public override void _Process(double delta)
@@ -153,7 +207,7 @@ public partial class SpireSenseOverlay : CanvasLayer
             if (_lastAnalysis == null || !analysis.Equals(_lastAnalysis))
             {
                 _lastAnalysis = analysis;
-                _label.Text = OverlayText.Build(analysis, _settings.ToggleKey, _settings.ShowCardNames);
+                _label.Text = OverlayText.Build(analysis, _settings.ShowCardNames);
             }
             _panel.Visible = true;
         }

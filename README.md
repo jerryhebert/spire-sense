@@ -12,8 +12,9 @@ deckbuilding "job", following the framework in
 | Scaling | Makes the deck stronger as the fight goes on (powers, strength, engines) |
 | Card Draw / Manipulation | Draw, scry, tutor, retain, top-decking, permanent thinning |
 
-The panel appears once a run is in progress and updates as your deck changes. **F8** toggles it and
-you can drag it anywhere; both are remembered. A card can count toward several jobs. Upgrades do not
+The panel appears once a run is in progress and updates as your deck changes. **Insert** hides and
+shows it, and you can drag it anywhere; both are remembered. To use a different key, click the
+hotkey button on the panel and press the one you want. A card can count toward several jobs. Upgrades do not
 change a card's jobs. Curses and statuses are counted separately and never contribute to a job.
 
 **Hovering any card** adds a Spire Sense line to its tooltip naming the jobs it counts for, and says
