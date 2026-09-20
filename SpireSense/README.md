@@ -15,6 +15,34 @@ An in-run overlay for Slay the Spire 2 that counts how many cards in your deck d
 A card can count toward several jobs. Upgrades do not change a card's jobs. Curses and statuses are
 counted separately and never contribute to a job.
 
+## Deck power
+
+The headline number at the top of the panel: one score out of 100 for how well the deck is holding
+up, and the job dragging it down. `Jobs/DeckPower.cs`.
+
+It is **not** a weighted sum, deliberately. A sum lets enormous damage paper over having no block,
+which is how runs actually end; the framework's claim is that you lose to the job you are *missing*.
+So each job gets an adequacy ratio, what it delivers over what this point in the run demands, and
+those combine with a harmonic mean, which is dominated by the smallest of them. Meeting every demand
+exactly scores 100. Surplus is capped, because twice the damage you need does not make up for half
+the block you need.
+
+Two of the four demands are grounded in real numbers rather than guesses:
+
+- **Damage** is measured against the average starting health of an elite in your current act, read
+  from the game's own encounter tables, over five turns. It rises by itself as you climb.
+- **Block** is measured against the damage enemies are actually landing on you, which the mod
+  watches the same way it watches your output. No table could be as accurate.
+- **Scaling** and **card draw** are compared against per-act thresholds that are judgement, not
+  measurement. They are the weakest inputs and are deliberately forgiving.
+
+The limiting job is the actionable half. "62, held back by Block" tells you what to draft; "62" on
+its own does not. Until there is something to compare against the panel says `measuring…` rather
+than showing a confident zero.
+
+**Unvalidated.** The weighting is reasoned, not fitted to outcomes. Treat it as a prompt to look at
+the row it names, not as a verdict.
+
 ## Using it
 
 - The panel shows nearly everywhere during a run: combat, the map, shops, events, rewards and the

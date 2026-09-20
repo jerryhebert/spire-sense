@@ -21,6 +21,11 @@ change a card's jobs. Curses and statuses are counted separately and never contr
 **Hovering any card** adds a Spire Sense line to its tooltip naming the jobs it counts for, and says
 when a classification was guessed rather than curated.
 
+At the top, a **deck power score** out of 100 and the job holding it back, for example
+"Power 62, held back by Block". Each job is scored on what it delivers against what your current act
+demands, and those combine so that the weakest one dominates, because runs end on the job you are
+missing rather than the one you are average at.
+
 Below the job counts, a **Per turn** section shows damage dealt and block gained in an average turn,
 measured from the run so far and refined with every turn you play. Before your first turn it falls
 back to an estimate from the deck, marked as such.

@@ -10,6 +10,7 @@ public static class OverlayText
     private const string Dim = "#9a9a9a";
     private const string Warn = "#e08a5a";
     private const string Divider = "#5a5a5a";
+    private const string Good = "#8fbf6f";
 
     /// <summary>How many card names are listed before the rest are elided.</summary>
     public const int MaxListedNames = 6;
@@ -20,17 +21,43 @@ public static class OverlayText
     private const char DividerChar = '─';
     private const int DividerWidth = 34;
 
-    public static string Build(DeckAnalysis a, bool showCardNames, CycleFigures cycle)
+    public static string Build(DeckAnalysis a, bool showCardNames, CycleFigures cycle, DeckPowerResult power)
     {
         var sb = new StringBuilder();
         sb.Append($"[b][color={Gold}]Spire Sense[/color][/b]  [color={Dim}]{a.TotalCards} cards[/color]\n");
 
+        AppendPower(sb, power);
         AppendJobCounts(sb, a);
         AppendDivider(sb);
         AppendCycle(sb, cycle);
         AppendFootnotes(sb, a, showCardNames);
 
         return sb.ToString();
+    }
+
+    /// <summary>
+    /// The headline number, and the job holding it back. The limiting job is the actionable half:
+    /// it says what to draft, where the score alone says only how worried to be.
+    /// </summary>
+    private static void AppendPower(StringBuilder sb, DeckPowerResult power)
+    {
+        if (!power.HasData)
+        {
+            sb.Append($"[color={Dim}]Power: measuring…[/color]");
+            sb.Append('\n');
+            return;
+        }
+
+        var colour = power.Score switch
+        {
+            >= 80 => Good,
+            >= 50 => Gold,
+            _ => Warn,
+        };
+
+        sb.Append($"[b][color={colour}]Power {power.Score}[/color][/b]");
+        sb.Append($"  [color={Dim}]held back by {Escape(power.LimitedBy)}[/color]");
+        sb.Append('\n');
     }
 
     /// <summary>

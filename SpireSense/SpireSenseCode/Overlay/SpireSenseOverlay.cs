@@ -27,6 +27,7 @@ public partial class SpireSenseOverlay : CanvasLayer
     private string? _lastErrorMessage;
     private object? _lastRun;
     private CycleFigures _lastCycle;
+    private DeckPowerResult _lastPower;
 
     /// <summary>Adds the overlay to the scene tree. Safe to call from mod initialization.</summary>
     public static void Install()
@@ -228,11 +229,15 @@ public partial class SpireSenseOverlay : CanvasLayer
 
             var analysis = DeckAnalysis.Analyze(deck.Select(CardFactsReader.Read));
             var cycle = CycleFigures.From(analysis, RunStats.Current);
-            if (_lastAnalysis == null || !analysis.Equals(_lastAnalysis) || !cycle.Equals(_lastCycle))
+            var power = DeckPower.Evaluate(ActTargets.BuildInputs(analysis, RunStats.Current));
+
+            if (_lastAnalysis == null || !analysis.Equals(_lastAnalysis)
+                || !cycle.Equals(_lastCycle) || !power.Equals(_lastPower))
             {
                 _lastAnalysis = analysis;
                 _lastCycle = cycle;
-                _label.Text = OverlayText.Build(analysis, _settings.ShowCardNames, cycle);
+                _lastPower = power;
+                _label.Text = OverlayText.Build(analysis, _settings.ShowCardNames, cycle, power);
             }
         }
         catch (Exception ex)
