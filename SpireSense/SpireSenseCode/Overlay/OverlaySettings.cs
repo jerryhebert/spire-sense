@@ -50,13 +50,13 @@ public sealed class OverlaySettings
     [JsonIgnore]
     public string ScaleLabel => PanelScale.Label(Scale);
 
-    /// <summary>Steps the scale and saves. Returns the new value.</summary>
-    public float AdjustScale(int steps)
-    {
-        Scale = PanelScale.Adjust(Scale, steps);
-        Save();
-        return Scale;
-    }
+    /// <summary>
+    /// Raised when the scale changes, so a panel that was not the one being dragged still resizes.
+    /// The two panels share one size setting and would otherwise disagree until a restart.
+    /// </summary>
+    public static event Action? ScaleChanged;
+
+    public void NotifyScaleChanged() => ScaleChanged?.Invoke();
 
     /// <summary>Computed from <see cref="ToggleKey"/>; JsonIgnore keeps it out of the saved file.</summary>
     [JsonIgnore]

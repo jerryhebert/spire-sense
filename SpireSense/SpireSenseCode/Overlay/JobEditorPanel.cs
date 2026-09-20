@@ -51,9 +51,8 @@ public partial class JobEditorPanel : PanelContainer
 
         var column = new VBoxContainer { Name = "Column", MouseFilter = MouseFilterEnum.Ignore };
         column.AddThemeConstantOverride("separation", 6);
-        AddChild(column);
 
-        var heading = new Label { Text = "Spire Sense — jobs  (drag to move)", MouseFilter = MouseFilterEnum.Ignore };
+        var heading = new Label { Text = "Spire Sense — jobs", MouseFilter = MouseFilterEnum.Ignore };
         heading.AddThemeFontSizeOverride("font_size", 20);
         heading.AddThemeColorOverride("font_color", new Color("e0c070"));
         column.AddChild(heading);
@@ -85,9 +84,16 @@ public partial class JobEditorPanel : PanelContainer
         _resetButton.Pressed += OnResetPressed;
         column.AddChild(_resetButton);
 
-        column.AddChild(ScaleControls.Build(_settings, 14, ApplyScale));
+        AddChild(GripLayer.Wrap(column, ResizeGrip.For(this, _settings)));
+
+        OverlaySettings.ScaleChanged += ApplyScale;
         ApplyScale();
         RestorePosition();
+    }
+
+    public override void _ExitTree()
+    {
+        OverlaySettings.ScaleChanged -= ApplyScale;
     }
 
     private void ApplyScale()

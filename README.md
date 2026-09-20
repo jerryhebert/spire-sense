@@ -20,8 +20,9 @@ change a card's jobs. Curses and statuses are counted separately and never contr
 **Hovering any card** adds a Spire Sense line to its tooltip naming the jobs it counts for, and says
 when a classification was guessed rather than curated.
 
-Both panels can be dragged anywhere and resized between 50% and 200% with the size buttons on them.
-Resizing scales the whole panel, text and spacing together, and the size is shared by both.
+Both panels can be dragged anywhere, and resized by the grip in their bottom-right corner, between
+50% and 200%. Resizing scales the whole panel, text and spacing together, and the size is shared by
+both so they always match.
 
 **Disagree with a verdict?** Open any card in the inspect view, from the Compendium or from a run,
 and a panel appears with a toggle per job. Drag it by its heading if the card's own tooltips cover it. Your choice is saved to

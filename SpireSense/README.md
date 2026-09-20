@@ -22,10 +22,11 @@ counted separately and never contribute to a job.
 - To rebind, click the hotkey button on the panel and press any key. Escape cancels rather than
   binding, so Escape cannot be used as the hotkey. Insert is the default because the game and other
   mods rarely claim it.
-- Both panels resize with their size buttons, from 50% to 200% in 10% steps. The whole panel scales,
-  not just the text, and the setting is shared so they stay the same size as each other.
-- The reclassification panel is draggable by its heading, since a card's own tooltips can sit over
-  where it opens. Its position is remembered separately from the overlay's.
+- Both panels resize from the grip in their bottom-right corner, between 50% and 200%. The whole
+  panel scales, not just the text, and the size is shared so the two always match. The grip's
+  tooltip shows the current percentage while you drag.
+- The reclassification panel is draggable by its heading or background, since a card's own tooltips
+  can sit over where it opens. Its position is remembered separately from the overlay's.
 - Settings live in `%APPDATA%\SlayTheSpire2\spiresense.json` (created on first toggle, drag, resize
   or rebind): `visible`, `x`, `y`, `font_size`, `scale`, `editor_x`, `editor_y`, `toggle_key` (any
   Godot `Key` name), `show_card_names`, `show_card_tips`. Delete the file to reset everything, which

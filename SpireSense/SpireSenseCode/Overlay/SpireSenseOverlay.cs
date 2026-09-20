@@ -116,9 +116,11 @@ public partial class SpireSenseOverlay : CanvasLayer
         column.AddThemeConstantOverride("separation", 6);
         column.AddChild(_label);
         column.AddChild(_hotkeyButton);
-        column.AddChild(ScaleControls.Build(_settings, Math.Max(12, _settings.FontSize - 5), ApplyScale));
-        _panel.AddChild(column);
+
+        _panel.AddChild(GripLayer.Wrap(column, ResizeGrip.For(_panel, _settings)));
         AddChild(_panel);
+
+        OverlaySettings.ScaleChanged += ApplyScale;
         ApplyScale();
 
         Visible = _settings.Visible;
@@ -173,6 +175,11 @@ public partial class SpireSenseOverlay : CanvasLayer
     private void UpdateHotkeyButton()
     {
         _hotkeyButton.Text = $"Hide with: {_settings.ToggleKeyLabel}  (click to change)";
+    }
+
+    public override void _ExitTree()
+    {
+        OverlaySettings.ScaleChanged -= ApplyScale;
     }
 
     private void ApplyScale()
