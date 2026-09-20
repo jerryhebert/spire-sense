@@ -139,6 +139,17 @@ public class RunStatsTests
     }
 
     [Fact]
+    public void TheHeaderShowsHowLongACycleIs()
+    {
+        // Regression: cycle length was computed and then never rendered, and no test noticed.
+        var analysis = DeckAnalysis.Analyze(Array.Empty<CardFacts>());
+
+        var text = OverlayText.Build(analysis, true, new CycleFigures(36, 23, 4.0, Measured: true));
+
+        Assert.Contains("4.0 turns", text);
+    }
+
+    [Fact]
     public void TheEstimateIsLabelledAndTheMeasurementIsNot()
     {
         var analysis = DeckAnalysis.Analyze(Array.Empty<CardFacts>());

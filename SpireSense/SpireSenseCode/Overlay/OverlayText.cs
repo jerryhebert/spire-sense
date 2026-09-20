@@ -67,6 +67,11 @@ public static class OverlayText
     private static void AppendCycle(StringBuilder sb, CycleFigures cycle)
     {
         sb.Append($"[b][color={Gold}]Cycle[/color][/b]");
+
+        // Cycle length is shown because it is the denominator: when it climbs, the deck has slowed,
+        // and that is the part of a curse's cost the damage figure alone would not explain.
+        sb.Append($"  [color={Dim}]{CycleFigures.FormatTurns(cycle.CycleTurns)} turns[/color]");
+
         if (!cycle.Measured)
         {
             sb.Append($"  [color={Dim}]estimated[/color]");
