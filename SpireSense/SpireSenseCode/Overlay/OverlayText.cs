@@ -50,6 +50,13 @@ public static class OverlayText
                 guessed > 0 ? $" [color={Dim}]({guessed} guessed)[/color]" : null);
         }
 
+        // Also a fact about what the deck contains, so it belongs with the counts rather than down
+        // with the estimates. Dimmed, because unlike the rows above it is not a job.
+        if (a.IgnoredCards > 0)
+        {
+            AppendRow(sb, "Curses / Status", $"{a.PercentOfDeck(a.IgnoredCards)}% ({a.IgnoredCards})", dim: true);
+        }
+
         sb.Append("[/table]");
     }
 
@@ -62,15 +69,14 @@ public static class OverlayText
         sb.Append("[/table]");
     }
 
-    private static void AppendRow(StringBuilder sb, string label, string figure, string? suffix = null)
+    private static void AppendRow(StringBuilder sb, string label, string figure, string? suffix = null, bool dim = false)
     {
         sb.Append("[cell]");
-        sb.Append(Escape(label));
+        sb.Append(dim ? $"[color={Dim}]{Escape(label)}[/color]" : Escape(label));
         sb.Append("[/cell][cell]");
         sb.Append(ColumnGap);
-        sb.Append("[/cell][cell][b]");
-        sb.Append(Escape(figure));
-        sb.Append("[/b]");
+        sb.Append("[/cell][cell]");
+        sb.Append(dim ? $"[color={Dim}]{Escape(figure)}[/color]" : $"[b]{Escape(figure)}[/b]");
         if (suffix != null)
         {
             sb.Append(suffix);
@@ -89,11 +95,6 @@ public static class OverlayText
 
     private static void AppendFootnotes(StringBuilder sb, DeckAnalysis a, bool showCardNames)
     {
-        if (a.IgnoredCards > 0)
-        {
-            sb.Append($"\n[color={Dim}]Curses / Status: {a.IgnoredCards}[/color]");
-        }
-
         if (a.UnclassifiedCardNames.Count > 0)
         {
             sb.Append($"\n[color={Warn}]No job: {a.UnclassifiedCardNames.Count}[/color]");

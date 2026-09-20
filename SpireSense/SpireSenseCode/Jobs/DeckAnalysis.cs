@@ -27,8 +27,11 @@ public sealed class DeckAnalysis : IEquatable<DeckAnalysis>
     /// Curses and statuses are part of the denominator because they are part of the deck you draw
     /// from, and the header counts them too.
     /// </summary>
-    public int PercentFor(Job job) =>
-        TotalCards == 0 ? 0 : (int)Math.Round(Counts[job] * 100.0 / TotalCards, MidpointRounding.AwayFromZero);
+    public int PercentFor(Job job) => PercentOfDeck(Counts[job]);
+
+    /// <summary>A card count as a whole-number percentage of the deck.</summary>
+    public int PercentOfDeck(int count) =>
+        TotalCards == 0 ? 0 : (int)Math.Round(count * 100.0 / TotalCards, MidpointRounding.AwayFromZero);
 
     public static DeckAnalysis Analyze(IEnumerable<CardFacts> deck)
     {
