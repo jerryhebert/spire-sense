@@ -47,6 +47,8 @@ jobs:
         run: ./scripts/Audit-Dependencies.ps1
 
       # The mod project cannot be compiled here: it links the game's own assemblies, which are not
-      # redistributable and are therefore not in this repository. Restoring it is enough to audit it.
-      - name: Verify mod lock file is current
-        run: dotnet restore SpireSense/SpireSense.csproj --locked-mode
+      # redistributable and are therefore not in this repository. Restoring it is enough to run
+      # NuGetAudit against it. It keeps no lock file, because the Godot SDK resolves a different
+      # graph per configuration; see the comment in SpireSense.csproj.
+      - name: Restore the mod project
+        run: dotnet restore SpireSense/SpireSense.csproj

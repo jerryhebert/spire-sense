@@ -70,8 +70,9 @@ name valid.
 package for known vulnerabilities and deprecation, and rejects floating version ranges such as
 `Version="*"` that would let a future restore pull an unreviewed version. Build-time dependencies like
 analyzers matter most, since they execute code during every build. Restore-time auditing is enabled in
-both project files, and both write a `packages.lock.json` so a transitive dependency change shows up
-in the diff.
+both project files. The test project also commits a `packages.lock.json`, so a change to any
+transitive dependency shows up in the diff; the mod project deliberately does not, because the Godot
+SDK resolves a different graph per build configuration and NuGet would rewrite the file constantly.
 
 **What CI cannot do.** It cannot compile the mod. That needs the game's own assemblies, which are not
 redistributable and are deliberately absent from this repository. CI restores the mod project in

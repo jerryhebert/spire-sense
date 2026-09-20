@@ -19,7 +19,14 @@
         <NuGetAudit>true</NuGetAudit>
         <NuGetAuditMode>all</NuGetAuditMode>
         <NuGetAuditLevel>low</NuGetAuditLevel>
-        <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+
+        <!-- Deliberately no lock file for this project. The Godot SDK auto-references
+             GodotSharpEditor outside Release, so the restore graph differs per configuration and
+             NuGet rewrites any lock file it finds, which left the working tree permanently dirty
+             and could land a lock file that fails CI. Little is lost: the only dependency that is
+             not auto-referenced by the SDK at its own pinned version is the analyzer above, which
+             is itself pinned. NuGetAudit still runs on every restore. The test project, which is
+             where the real third-party surface lives, does keep a lock file. -->
     </PropertyGroup>
 
     <PropertyGroup>
