@@ -26,7 +26,9 @@ public readonly record struct CardFacts(
     bool GainsBlock,
     decimal Draw,
     decimal StrengthGain,
-    decimal DexterityGain)
+    decimal DexterityGain,
+    int EnergyCost = 0,
+    bool CostsX = false)
 {
     /// <summary>Convenience factory for tests and for cards whose data could not be read.</summary>
     public static CardFacts Named(string className, CardKind kind = CardKind.Other) =>

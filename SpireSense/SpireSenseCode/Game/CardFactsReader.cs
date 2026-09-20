@@ -28,7 +28,10 @@ public static class CardFactsReader
                 GainsBlock: card.GainsBlock,
                 Draw: Value(vars, "Cards"),
                 StrengthGain: Value(vars, "StrengthPower"),
-                DexterityGain: Value(vars, "DexterityPower"));
+                DexterityGain: Value(vars, "DexterityPower"),
+                EnergyCost: card.EnergyCost?.Canonical ?? 0,
+                // An X-cost card eats whatever is left, so it cannot be costed up front.
+                CostsX: card.EnergyCost?.CostsX ?? false);
         }
         catch (Exception ex)
         {

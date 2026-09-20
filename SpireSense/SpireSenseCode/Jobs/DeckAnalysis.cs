@@ -12,6 +12,12 @@ public sealed class DeckAnalysis : IEquatable<DeckAnalysis>
     public IReadOnlyList<string> UnclassifiedCardNames { get; private init; } = Array.Empty<string>();
     public IReadOnlyList<string> GuessedCardNames { get; private init; } = Array.Empty<string>();
 
+    /// <summary>Estimated damage per turn, averaged over one cycle through the deck.</summary>
+    public double AvgCycleDamage { get; private init; }
+
+    /// <summary>Estimated block per turn, averaged over one cycle through the deck.</summary>
+    public double AvgCycleMitigation { get; private init; }
+
     public static readonly DeckAnalysis Empty = new();
 
     private static Dictionary<Job, int> EmptyCounts() => JobInfo.All.ToDictionary(j => j, _ => 0);
@@ -32,10 +38,24 @@ public sealed class DeckAnalysis : IEquatable<DeckAnalysis>
         var guessedNames = new List<string>();
         int total = 0;
         int ignored = 0;
+        decimal deckDamage = 0;
+        decimal deckBlock = 0;
+        int deckEnergy = 0;
 
         foreach (var card in deck)
         {
             total++;
+
+            // Curses and statuses cannot be played, so they cost nothing and contribute nothing,
+            // but they still count toward the deck size and so lengthen the cycle.
+            if (card.Kind is not (CardKind.Curse or CardKind.Status))
+            {
+                deckDamage += card.Damage;
+                deckBlock += card.Block;
+                // An X-cost card consumes whatever energy is left rather than a fixed amount, so
+                // costing it at zero would make the deck look far cheaper than it plays.
+                deckEnergy += card.CostsX ? CycleEstimate.EnergyPerTurn : card.EnergyCost;
+            }
             var result = CardClassifier.Classify(card);
 
             switch (result.Source)
@@ -73,6 +93,8 @@ public sealed class DeckAnalysis : IEquatable<DeckAnalysis>
             GuessedCounts = guessed,
             UnclassifiedCardNames = unclassified,
             GuessedCardNames = guessedNames,
+            AvgCycleDamage = CycleEstimate.PerTurn((double)deckDamage, total, deckEnergy),
+            AvgCycleMitigation = CycleEstimate.PerTurn((double)deckBlock, total, deckEnergy),
         };
     }
 
@@ -84,6 +106,11 @@ public sealed class DeckAnalysis : IEquatable<DeckAnalysis>
         foreach (var job in JobInfo.All)
         {
             if (Counts[job] != other.Counts[job] || GuessedCounts[job] != other.GuessedCounts[job]) return false;
+        }
+        if (Math.Abs(AvgCycleDamage - other.AvgCycleDamage) > 0.05
+            || Math.Abs(AvgCycleMitigation - other.AvgCycleMitigation) > 0.05)
+        {
+            return false;
         }
         return UnclassifiedCardNames.SequenceEqual(other.UnclassifiedCardNames)
             && GuessedCardNames.SequenceEqual(other.GuessedCardNames);
