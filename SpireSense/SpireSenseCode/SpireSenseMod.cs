@@ -67,12 +67,41 @@ public static class SpireSenseMod
 
         _harmony = new Harmony(ModId);
         _harmony.PatchAll(Assembly.GetExecutingAssembly());
+        ReportPatches(_harmony);
 
         SpireSenseOverlay.Install();
         if (!CardJobTip.IsAvailable)
         {
             ModLog.Warn("Card hover tips are unavailable: the HoverTip layout changed in this game build.");
         }
-        ModLog.Info("Spire Sense ready. Press F8 to toggle the overlay.");
+        ModLog.Info($"Spire Sense ready. Press {OverlaySettings.Current.ToggleKey} to toggle the overlay.");
+    }
+
+    /// <summary>
+    /// Names every method actually patched, and complains about any expected one that is missing.
+    /// Harmony skips a patch class silently when it has no type-level attribute, which cost a
+    /// release once: the feature simply did nothing and nothing in the log said so.
+    /// </summary>
+    private static void ReportPatches(Harmony harmony)
+    {
+        var patched = harmony.GetPatchedMethods()
+            .Select(m => $"{m.DeclaringType?.Name}.{m.Name}")
+            .OrderBy(n => n, StringComparer.Ordinal)
+            .ToList();
+
+        ModLog.Info($"Harmony patches applied ({patched.Count}): {string.Join(", ", patched)}");
+
+        var expected = new[]
+        {
+            "CardModel.get_HoverTips",
+            "NInspectCardScreen._Ready",
+            "NInspectCardScreen.UpdateCardDisplay",
+        };
+
+        var missing = expected.Where(e => !patched.Contains(e)).ToList();
+        if (missing.Count > 0)
+        {
+            ModLog.Error($"These patches did not apply, so the features behind them are dead: {string.Join(", ", missing)}");
+        }
     }
 }
