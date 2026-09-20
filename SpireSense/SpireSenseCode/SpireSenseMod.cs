@@ -66,7 +66,7 @@ public static class SpireSenseMod
         }
 
         _harmony = new Harmony(ModId);
-        _harmony.PatchAll(Assembly.GetExecutingAssembly());
+        ApplyPatches(_harmony, Assembly.GetExecutingAssembly());
         ReportPatches(_harmony);
 
         SpireSenseOverlay.Install();
@@ -75,6 +75,33 @@ public static class SpireSenseMod
             ModLog.Warn("Card hover tips are unavailable: the HoverTip layout changed in this game build.");
         }
         ModLog.Info($"Spire Sense ready. Press {OverlaySettings.Current.ToggleKey} to toggle the overlay.");
+    }
+
+    /// <summary>
+    /// Applies each patch class separately rather than through PatchAll.
+    ///
+    /// PatchAll aborts on the first class that throws, so one bad patch took the whole mod down
+    /// with it: no overlay, no tooltips, nothing, for a fault in one feature. Patching class by
+    /// class means a broken patch disables only its own feature and says so in the log.
+    /// </summary>
+    private static void ApplyPatches(Harmony harmony, Assembly assembly)
+    {
+        foreach (var type in AccessTools.GetTypesFromAssembly(assembly))
+        {
+            if (!type.HasHarmonyAttribute())
+            {
+                continue;
+            }
+
+            try
+            {
+                harmony.CreateClassProcessor(type).Patch();
+            }
+            catch (Exception ex)
+            {
+                ModLog.Error($"Patch class {type.Name} failed to apply, so its feature is off: {ex.Message}");
+            }
+        }
     }
 
     /// <summary>
