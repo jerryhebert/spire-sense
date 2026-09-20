@@ -1,69 +1,45 @@
-# Slay the Spire 2 modding workspace
+# Spire Sense
 
-Everything needed to build, package and install mods for Slay the Spire 2 on this machine.
+An in-run overlay for **Slay the Spire 2** that counts how many cards in your deck do each
+deckbuilding "job", following the framework in
+[Solving the Spire with Jobs](https://sts2.untapped.gg/en/articles/slay-the-spire-deckbuilding-strategy-solving-the-spire-with-jobs).
 
-## Layout
+| Job | Meaning |
+|---|---|
+| Frontloaded Damage | Deals real damage the turn it is played, no setup needed |
+| of which AoE | The subset of those that hit every enemy |
+| Frontloaded Block | Prevents damage the turn it is played (block, weaken-all, intangible…) |
+| Scaling | Makes the deck stronger as the fight goes on (powers, strength, engines) |
+| Card Draw / Manipulation | Draw, scry, tutor, retain, top-decking, permanent thinning |
 
-| Path | Purpose | In git? |
-|---|---|---|
-| `<ModName>/` | One folder per mod. Solution and project live in the same directory (Godot requires this). | yes |
-| `tests/` | Unit tests for mod logic. Do not reference the game, so they run anywhere. | yes |
-| `scripts/Run-Checks.ps1` | Everything at once: tests, dependency audit, mod build. Run before committing. | yes |
-| `scripts/Audit-Dependencies.ps1` | Supply-chain audit of all NuGet dependencies. Exits non-zero on findings. | yes |
-| `scripts/Decompile-Sts2.ps1` | Regenerates `reference/sts2-decompiled` from the installed game. Re-run after every game update. | yes |
-| `scripts/decompiler/` | Small console app around the ILSpy decompiler engine, used by the script above. | yes |
-| `.github/` | CI workflow and Dependabot config. Inert until this repo has a GitHub remote. | yes |
-| `reference/sts2-decompiled/` | The game's C# source, decompiled. Read-only reference for finding hooks, models and IDs. `DECOMPILED_FROM.json` records the game build. | no |
-| `tools/megadot/` | MegaDot (MegaCrit's Godot fork) editor and its export templates. Used to export `.pck` asset packs. | no |
+The panel appears once a run is in progress and updates as your deck changes. **F8** toggles it and
+you can drag it anywhere; both are remembered. A card can count toward several jobs. Upgrades do not
+change a card's jobs. Curses and statuses are counted separately and never contribute to a job.
 
-## Toolchain
+All 519 cards across the Ironclad, Silent, Defect, Necrobinder, Regent and Colorless pools are
+hand-classified, each with a one-line rationale. See [SpireSense/README.md](SpireSense/README.md) for
+how classification works and how to change a verdict.
 
-| Tool | Version | Location |
-|---|---|---|
-| Slay the Spire 2 | v0.111.0 (commit 41cef1ea, 2026-08-13) | `C:\Program Files (x86)\Steam\steamapps\common\Slay the Spire 2` |
-| Game runtime | .NET 9 (`net9.0`), MegaDot 4.5.1 | `data_sts2_windows_x86_64\` next to the exe |
-| .NET SDK | 9.0.318 | `C:\Program Files\dotnet` |
-| MegaDot editor | 4.5.1-m.14 | `tools\megadot\4.5.1-m.14\MegaDot_v4.5.1-stable_mono_win64.exe` |
-| MegaDot export templates | 4.5.1.m.14.mono | `%APPDATA%\Godot\export_templates\4.5.1.m.14.mono\` |
-| Alchyr.Sts2.Templates | 2.5.2 | `dotnet new alchyrsts2mod`, `alchyrsts2contentmod`, `alchyrsts2charmod` |
-| BaseLib | v3.4.7 | Installed as a mod in the game's `mods\BaseLib\` folder; referenced by NuGet `Alchyr.Sts2.BaseLib` at build time |
-| JetBrains Rider | 2026.2 | IDE |
-| ILSpy | 11.0 | GUI decompiler, `%LOCALAPPDATA%\Programs\ILSpy` |
-| Git | 2.55 | `C:\Program Files\Git` |
+## Installing
 
-Re-download MegaDot from <https://megadot.megacrit.com/> (Windows `editor-csharp` zip plus the `mono-export-templates.tpz`). The `.tpz` is a zip; its `templates/` contents go in the export templates folder above, named after the engine's version string.
+Grab `SpireSense.dll` and `SpireSense.json` from a release, put them in a `mods/SpireSense/` folder
+inside your Slay the Spire 2 install directory, and restart the game. The mod is code-only: there is
+no `.pck` and no dependency on other mods. It declares `affects_gameplay: false`, so it does not
+trigger multiplayer mod-mismatch checks.
 
-BaseLib releases: <https://github.com/Alchyr/BaseLib-StS2/releases>. Template docs: <https://github.com/Alchyr/ModTemplate-StS2/wiki>.
+## Building
 
-## How the game loads mods
+Requires the [.NET 9 SDK](https://dotnet.microsoft.com/download) and a copy of the game, whose
+assemblies the mod compiles against. The project finds a Steam install automatically; set `Sts2Path`
+in `SpireSense/Directory.Build.props` if yours lives elsewhere.
 
-Derived from `reference/sts2-decompiled/MegaCrit/Sts2/Core/Modding/ModManager.cs`.
-
-- At startup the game scans `<game>\mods\` (recursively, subfolders allowed) and Steam Workshop items for `*.json` manifests.
-- For a manifest with `"id": "Foo"` it loads `Foo.dll` if `has_dll` and `Foo.pck` if `has_pck` from the same folder. File names must match the id.
-- Dependencies (`dependencies: [{ "id", "min_version" }]`) are topologically sorted and must be present and loaded.
-- If a type in the dll carries `[ModInitializer("MethodName")]`, that static method is called. Otherwise the game creates a Harmony instance and calls `PatchAll` on the assembly.
-- `affects_gameplay: false` marks cosmetic mods so multiplayer does not compare them.
-- Launching the game with the `nomods` argument skips all mod loading (handy for vanilla comparisons).
-- Mods cannot be reloaded at runtime. Restart the game after every build.
-
-## Day-to-day workflow
-
-1. Open `<ModName>\<ModName>.sln` in Rider.
-2. **Build** compiles the dll and copies `<ModName>.dll`, `.pdb` and `.json` into `<game>\mods\<ModName>\`. Enough for code-only changes.
-3. **Publish** (Rider: right-click project, Publish to folder; or `dotnet publish -c Release`) additionally runs MegaDot headless to export `<ModName>.pck`. Required after any change to assets, scenes, or localization files.
-4. Launch the game, check the Mods screen, and read `%APPDATA%\SlayTheSpire2\logs\godot.log` for `[INFO]`/`[ERROR]` lines tagged with the mod id.
-
-## Creating a new mod
-
-```powershell
-cd C:\Users\jerry\Projects\STS2Modding
-dotnet new alchyrsts2mod -n MyMod -o MyMod --ModAuthor jerry   # or alchyrsts2contentmod / alchyrsts2charmod
-dotnet new sln -n MyMod -o MyMod
-dotnet sln MyMod\MyMod.sln add MyMod\MyMod.csproj
+```bash
+dotnet build SpireSense/SpireSense.csproj -c Release
 ```
 
-Then set `<GodotPath>` in `MyMod\Directory.Build.props` to the MegaDot exe path above. The project auto-detects the game install through the Steam registry keys.
+Building copies the mod straight into the game's `mods/SpireSense/` folder. Restart the game to pick
+up changes; mods cannot hot-reload. Launching the game with the `nomods` argument gives you a vanilla
+run for comparison.
 
 ## Checks
 
@@ -71,28 +47,78 @@ Then set `<GodotPath>` in `MyMod\Directory.Build.props` to the MegaDot exe path 
 pwsh ./scripts/Run-Checks.ps1
 ```
 
-Runs the unit tests, the dependency audit, and a Release build of the mod. Add `-SkipBuild` on a
-machine without the game.
+Runs the unit tests, the dependency audit, and a Release build. Add `-SkipBuild` on a machine without
+the game installed.
 
-**Tests.** Mod logic is split so that the decision-making code has no dependency on the game or on
-Godot. The test project compiles those source files directly rather than referencing the mod
-project, because the mod project links the game's assemblies and cannot load outside the game. That
-also means tests run in CI, where no copy of the game exists.
+**Tests.** The decision-making code has no dependency on the game or on Godot: `CardFacts` is a plain
+snapshot of what a card contributes, and one adapter file reads that out of the game's model. The test
+project compiles those source files directly rather than referencing the mod project, because the mod
+project links the game's assemblies and cannot load outside the game. That is also what lets tests run
+in CI, where no copy of the game exists. The most important tests guard the classification data
+itself: full pool coverage, no card in two tables, every AoE card also counted as damage, every job
+name valid.
 
-**Dependency audit.** Checks every direct and transitive NuGet package for known vulnerabilities and
-deprecation, and rejects floating version ranges such as `Version="*"`, which would let a future
-restore pull an unreviewed version. Build-time dependencies like analyzers matter most here because
-they execute code during every build. Restore-time auditing is also on in both project files
-(`NuGetAudit`), and both projects write a `packages.lock.json` so a transitive dependency change
-shows up in the diff.
+**Dependency audit.** `scripts/Audit-Dependencies.ps1` checks every direct and transitive NuGet
+package for known vulnerabilities and deprecation, and rejects floating version ranges such as
+`Version="*"` that would let a future restore pull an unreviewed version. Build-time dependencies like
+analyzers matter most, since they execute code during every build. Restore-time auditing is enabled in
+both project files, and both write a `packages.lock.json` so a transitive dependency change shows up
+in the diff.
 
-**What CI cannot do.** It cannot compile the mod. Doing so needs the game's own assemblies, which
-are not redistributable and are deliberately not in this repository. CI restores the mod project in
-locked mode to catch dependency drift; compiling it stays a local step.
+**What CI cannot do.** It cannot compile the mod. That needs the game's own assemblies, which are not
+redistributable and are deliberately absent from this repository. CI restores the mod project in
+locked mode to catch dependency drift; compiling stays a local step.
+
+## Repository layout
+
+| Path | Purpose | In git? |
+|---|---|---|
+| `SpireSense/` | The mod. Solution and project share a directory, which Godot requires. | yes |
+| `tests/` | Unit tests. No dependency on the game, so they run anywhere. | yes |
+| `scripts/` | Check runner, dependency audit, and the decompiler used for reference. | yes |
+| `.github/` | CI workflow and Dependabot config. | yes |
+| `reference/` | The game's own code, decompiled locally for reference. | **no** |
+| `tools/` | MegaDot editor and export templates, downloaded locally. | **no** |
+
+`reference/` and `tools/` are deliberately git-ignored. Regenerate the reference source yourself with
+`scripts/Decompile-Sts2.ps1` after any game update.
+
+## Development environment
+
+- **.NET 9 SDK** — required to build anything.
+- **An IDE** — JetBrains Rider is what the community mod templates target; anything that reads `.sln`
+  works.
+- **A .NET decompiler** — ILSpy, for reading the game's code. `scripts/Decompile-Sts2.ps1` produces a
+  searchable copy of the whole assembly under `reference/`.
+- **MegaDot** — MegaCrit's Godot fork, from <https://megadot.megacrit.com/>. Only needed for mods that
+  ship assets in a `.pck`. Spire Sense does not, so this is optional here. The game refuses `.pck`
+  files exported by a newer Godot than it runs.
+- **Mod templates** — `dotnet new install Alchyr.Sts2.Templates`, documented at
+  <https://github.com/Alchyr/ModTemplate-StS2/wiki>.
+
+## How the game loads mods
+
+Derived from the game's own `ModManager`:
+
+- At startup the game scans `<game>/mods/` recursively, plus Steam Workshop items, for `*.json`
+  manifests.
+- For a manifest with `"id": "Foo"` it loads `Foo.dll` if `has_dll` and `Foo.pck` if `has_pck` from the
+  same folder. File names must match the id.
+- Dependencies are topologically sorted and must be present and loaded.
+- If a type in the dll carries `[ModInitializer("MethodName")]`, that static method is called.
+  Otherwise the game creates a Harmony instance and calls `PatchAll` on the assembly.
+- `affects_gameplay: false` marks cosmetic mods so multiplayer does not compare them.
+- Mods cannot be reloaded at runtime.
 
 ## After a game update
 
 1. Check `release_info.json` in the game folder for the new version.
-2. Run `scripts\Decompile-Sts2.ps1` to refresh the reference source.
-3. Rebuild each mod and fix anything whose signatures changed. Bump `min_game_version` in the manifest if the mod relies on the new build.
-4. If MegaDot has a new release, update it too. The game refuses `.pck` files exported by a newer Godot than it runs.
+2. Run `scripts/Decompile-Sts2.ps1` to refresh the reference source.
+3. Rebuild and fix anything whose signatures changed. Bump `min_game_version` in the manifest if the
+   mod now relies on the newer build.
+
+## License and attribution
+
+[MIT](LICENSE). Slay the Spire 2 is the property of Mega Crit; this project is an unaffiliated fan mod
+and contains no game code or assets. The project was scaffolded from
+[Alchyr's mod template](https://github.com/Alchyr/ModTemplate-StS2).
