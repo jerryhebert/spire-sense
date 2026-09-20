@@ -1,0 +1,14 @@
+# Large downloaded tooling (MegaDot editor, export templates). See README for how to re-download.
+tools/
+
+# Decompiled game source for reference only. Regenerate with scripts/Decompile-Sts2.ps1.
+reference/
+
+# .NET / Godot build output
+bin/
+obj/
+.godot/
+*.user
+*.suo
+.vs/
+.idea/
