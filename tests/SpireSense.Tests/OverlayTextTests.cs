@@ -79,6 +79,21 @@ public class OverlayTextTests
         Assert.DoesNotContain("\u00A0Acceleration", text);
     }
 
+    [Fact]
+    public void AGrouplessCategoryIsSetLikeAHeadingBecauseThatIsItsLevel()
+    {
+        // Acceleration is a peer of Damage and Block, not something filed under them. Setting it
+        // like the rows it sits beside would put it a level lower than it belongs.
+        var text = Render(new[] { CardFacts.Named("StrikeIronclad", CardKind.Attack) });
+
+        Assert.Contains("[b]Damage[/b]", text);
+        Assert.Contains("[b]Block[/b]", text);
+        Assert.Contains("[b]Acceleration[/b]", text);
+
+        // And the rows underneath a heading are not, or the grouping would not read at all.
+        Assert.DoesNotContain("[b]Frontloaded[/b]", text);
+    }
+
     private static int CountOf(string haystack, string needle)
     {
         var count = 0;
