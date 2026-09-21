@@ -56,6 +56,31 @@ public static class CategoryInfo
         _ => category.ToString(),
     };
 
+    /// <summary>
+    /// The heading a category sits under on the panel, or null for one that stands on its own.
+    /// Grouping lets the rows inside a group drop the repeated half of their name.
+    /// </summary>
+    public static string? Group(Category category) => category switch
+    {
+        Category.FrontloadedDamage or Category.ScalingDamage or Category.Aoe => "Damage",
+        Category.FrontloadedBlock or Category.ScalingBlock => "Block",
+        _ => null,
+    };
+
+    /// <summary>
+    /// What a category is called underneath its group heading, where "Damage" or "Block" is already
+    /// established and repeating it would be noise. Meaningless without the heading above it, so
+    /// anywhere a category appears on its own wants <see cref="DisplayName"/> instead.
+    /// </summary>
+    public static string ShortName(Category category) => category switch
+    {
+        Category.FrontloadedDamage or Category.FrontloadedBlock => "Frontloaded",
+        Category.ScalingDamage or Category.ScalingBlock => "Scaling",
+        Category.Aoe => "AOE",
+        Category.Acceleration => "Acceleration",
+        _ => category.ToString(),
+    };
+
     /// <summary>Spelled out, for places with room to explain what an abbreviation stands for.</summary>
     public static string LongName(Category category) => category switch
     {
