@@ -28,6 +28,14 @@ public static class OverlayText
     /// </summary>
     private const int FigureWidth = 9;
 
+    /// <summary>
+    /// What figures are padded with. A no-break space, not an ordinary one: RichTextLabel does not
+    /// treat leading ordinary spaces in a cell as significant, so a row padded with three of them
+    /// lost more width than a row padded with two, and single-digit rows sat a character left of
+    /// the rest. U+00A0 survives that, and is the same advance width in a monospaced font.
+    /// </summary>
+    private const char FigurePad = ' ';
+
     public static string Build(DeckAnalysis a, bool showCardNames, CycleFigures cycle, DeckPowerResult power)
     {
         var sb = new StringBuilder();
@@ -125,7 +133,7 @@ public static class OverlayText
 
     private static void AppendRow(StringBuilder sb, string label, string figure, string? suffix = null, bool dim = false)
     {
-        var value = Mono(figure.PadLeft(FigureWidth));
+        var value = Mono(figure.PadLeft(FigureWidth, FigurePad));
 
         sb.Append("[cell]");
         sb.Append(dim ? $"[color={Dim}]{Escape(label)}[/color]" : Escape(label));
@@ -159,17 +167,14 @@ public static class OverlayText
         sb.Append("[/color]\n");
     }
 
+    /// <summary>
+    /// Cards with no category are deliberately not reported. Every card in the game is curated, so
+    /// the only ones that land there are the handful that genuinely touch no axis — a heal, a gold
+    /// payout — and a warning about those is noise on a panel read mid-fight. The hover tip still
+    /// says so on the card itself, where you asked about that card.
+    /// </summary>
     private static void AppendFootnotes(StringBuilder sb, DeckAnalysis a, bool showCardNames)
     {
-        if (a.UnclassifiedCardNames.Count > 0)
-        {
-            sb.Append($"\n[color={Warn}]No category: {a.UnclassifiedCardNames.Count}[/color]");
-            if (showCardNames)
-            {
-                sb.Append($" [color={Dim}]{NameList(a.UnclassifiedCardNames)}[/color]");
-            }
-        }
-
         if (a.GuessedCardNames.Count > 0 && showCardNames)
         {
             sb.Append($"\n[color={Dim}]Guessed: {NameList(a.GuessedCardNames)}[/color]");

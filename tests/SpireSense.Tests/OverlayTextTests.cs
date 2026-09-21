@@ -86,6 +86,11 @@ public class OverlayTextTests
         Assert.NotEmpty(figures);
         Assert.Contains(figures, f => f.Contains('%'));
         Assert.All(figures.Where(f => f.Contains('%')), f => Assert.Equal(figures.First(x => x.Contains('%')).Length, f.Length));
+
+        // The padding is no-break spaces. RichTextLabel does not treat leading ordinary spaces in a
+        // cell as significant, so padding with them put single-digit rows a character left of the
+        // rest — which is exactly the misalignment this is meant to prevent.
+        Assert.All(figures, f => Assert.DoesNotContain(' ', f.TakeWhile(char.IsWhiteSpace)));
     }
 
     [Fact]
@@ -104,9 +109,27 @@ public class OverlayTextTests
     }
 
     [Fact]
+    public void CardsWithNoCategoryAreNotReportedOnThePanel()
+    {
+        // Every card in the game is curated, so the only ones with no category are the handful that
+        // genuinely touch no axis: a heal, a gold payout. Flagging those mid-fight is noise. The
+        // hover tip still says so on the card itself, where the question was actually asked.
+        var deck = new[]
+        {
+            CardFacts.Named("StrikeIronclad", CardKind.Attack),
+            CardFacts.Named(TestData.UnknownCardName, CardKind.Skill) with { DisplayName = "Does Nothing" },
+        };
+
+        var text = Render(deck);
+
+        Assert.DoesNotContain("No category", text);
+        Assert.DoesNotContain("Does Nothing", text);
+    }
+
+    [Fact]
     public void HidesCardNamesWhenTheSettingIsOff()
     {
-        var deck = new[] { CardFacts.Named(TestData.UnknownCardName, CardKind.Skill) with { DisplayName = "Odd Trinket" } };
+        var deck = new[] { TestData.Skill(TestData.UnknownCardName, block: 5) with { DisplayName = "Odd Trinket" } };
 
         Assert.Contains("Odd Trinket", Render(deck));
         Assert.DoesNotContain("Odd Trinket", Render(deck, showCardNames: false));
@@ -116,7 +139,7 @@ public class OverlayTextTests
     public void ElidesLongCardNameLists()
     {
         var deck = Enumerable.Range(0, OverlayText.MaxListedNames + 3)
-            .Select(i => CardFacts.Named(TestData.UnknownCardName, CardKind.Skill) with { DisplayName = $"Trinket{i}" })
+            .Select(i => TestData.Skill(TestData.UnknownCardName, block: 5) with { DisplayName = $"Trinket{i}" })
             .ToList();
 
         var text = Render(deck);
@@ -129,7 +152,7 @@ public class OverlayTextTests
     [Fact]
     public void EscapesBracketsSoACardNameCannotBreakTheMarkup()
     {
-        var deck = new[] { CardFacts.Named(TestData.UnknownCardName, CardKind.Skill) with { DisplayName = "[color=red]evil" } };
+        var deck = new[] { TestData.Skill(TestData.UnknownCardName, block: 5) with { DisplayName = "[color=red]evil" } };
 
         var text = Render(deck);
 
