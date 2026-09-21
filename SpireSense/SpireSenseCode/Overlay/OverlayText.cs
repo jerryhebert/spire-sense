@@ -36,6 +36,12 @@ public static class OverlayText
     /// </summary>
     private const char FigurePad = ' ';
 
+    /// <summary>
+    /// Indent for a line hanging under the one above it. No-break spaces for the same reason the
+    /// figures use them: ordinary leading spaces do not survive into layout.
+    /// </summary>
+    private const string Indent = "  ";
+
     public static string Build(DeckAnalysis a, bool showCardNames, CycleFigures cycle, DeckPowerResult power)
     {
         var sb = new StringBuilder();
@@ -75,7 +81,12 @@ public static class OverlayText
         };
 
         sb.Append($"[b][color={colour}]Power {Mono(power.Label)} / {Mono("10")}[/color][/b]");
-        sb.Append($"  [color={Dim}]held back by {Escape(power.LimitedBy)}[/color]");
+        sb.Append('\n');
+
+        // On its own line, and indented under the score it explains. Alongside it, this was the
+        // longest line on the panel, and since the panel is only as narrow as its widest line it
+        // set a floor on the whole thing — one nobody could shrink past.
+        sb.Append($"{Indent}[color={Dim}]held back by {Escape(power.LimitedBy)}[/color]");
         sb.Append('\n');
     }
 
