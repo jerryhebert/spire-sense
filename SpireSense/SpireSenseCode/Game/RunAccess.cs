@@ -3,7 +3,6 @@ using HarmonyLib;
 using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
-using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
 using SpireSense.SpireSenseCode.Categories;
 
@@ -80,45 +79,4 @@ public static class RunAccess
     }
 
     public static IReadOnlyList<CardModel>? LocalDeck => LocalPlayer?.Deck?.Cards;
-
-    /// <summary>Your current health, or null when there is no run.</summary>
-    public static int? CurrentHp
-    {
-        get
-        {
-            try
-            {
-                return LocalPlayer?.Creature?.CurrentHp;
-            }
-            catch
-            {
-                return null;
-            }
-        }
-    }
-
-    /// <summary>
-    /// What kind of fight the current room is. Anything that is not an elite or a boss counts as an
-    /// ordinary fight, including event combats: they cost health the same way, and splitting them
-    /// out would divide the sample without telling you anything you would act on.
-    /// </summary>
-    public static FightKind CurrentFightKind
-    {
-        get
-        {
-            try
-            {
-                return CurrentRun?.CurrentRoom?.RoomType switch
-                {
-                    RoomType.Elite => FightKind.Elite,
-                    RoomType.Boss => FightKind.Boss,
-                    _ => FightKind.Normal,
-                };
-            }
-            catch
-            {
-                return FightKind.Normal;
-            }
-        }
-    }
 }

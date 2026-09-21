@@ -32,10 +32,8 @@ down, which is the part worth seeing.
 **Hovering any card** adds a Spire Sense line to its tooltip naming the categories it counts for, and
 says when a classification was guessed rather than curated.
 
-At the top, set apart by its own rule, **what the next hard fight is likely to cost you**, for example
-"Elites cost 24 HP — you have 58". Measured from this run: the health you have actually lost in each
-kind of fight so far. It turns orange when the next one would cost more than you have left. Under it,
-the part of the deck furthest behind what this act demands, for example "weakest: Block".
+Under the title, the part of the deck furthest behind what this act demands, for example
+"weakest: Block". That is all the panel says about the deck as a whole.
 
 There used to be a deck power score out of 10 here. It was removed: its weights, its cap and its
 floor were all invented, nothing was ever checked against whether runs were won, and averaging four

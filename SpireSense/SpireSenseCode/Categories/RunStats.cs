@@ -31,59 +31,6 @@ public sealed class RunStats
     public int TurnsObserved { get; private set; }
 
     private string? _lastTurnKey;
-    private string? _lastFightKey;
-    private FightKind _currentFight = FightKind.Normal;
-
-    /// <summary>
-    /// Health actually lost, per kind of fight. This is the attrition figure, so unlike
-    /// <see cref="TotalIncomingDamage"/> it is what got through block: blocked damage costs you
-    /// nothing and does not belong in what a fight costs.
-    /// </summary>
-    private readonly Dictionary<FightKind, double> _hpLost = NewTally<double>();
-
-    private readonly Dictionary<FightKind, int> _fightsSeen = NewTally<int>();
-
-    private static Dictionary<FightKind, T> NewTally<T>() where T : struct =>
-        FightKindInfo.All.ToDictionary(k => k, _ => default(T));
-
-    /// <summary>Fights of this kind seen so far this run.</summary>
-    public int FightsSeen(FightKind kind) => _fightsSeen[kind];
-
-    /// <summary>Total health lost in fights of this kind.</summary>
-    public double HpLost(FightKind kind) => _hpLost[kind];
-
-    /// <summary>
-    /// What a fight of this kind has cost you on average, or NaN if you have not had one yet.
-    /// NaN rather than zero, because "no elite yet" and "elites are free" are opposite facts.
-    /// </summary>
-    public double HpLostPerFight(FightKind kind) =>
-        _fightsSeen[kind] == 0 ? double.NaN : _hpLost[kind] / _fightsSeen[kind];
-
-    /// <summary>
-    /// Registers the combat being fought and what kind it is. Called every frame while in combat,
-    /// so the fight is counted once and its kind stays current even if the room is readable only
-    /// after the fight has started.
-    /// </summary>
-    public void NoteFight(string fightKey, FightKind kind)
-    {
-        _currentFight = kind;
-
-        if (fightKey != _lastFightKey)
-        {
-            _lastFightKey = fightKey;
-            _fightsSeen[kind]++;
-        }
-    }
-
-    /// <summary>Health lost, charged to the fight in progress.</summary>
-    public void AddHpLost(double amount)
-    {
-        if (amount > 0)
-        {
-            _hpLost[_currentFight] += amount;
-        }
-    }
-
     /// <summary>
     /// Size of the hand dealt at the last turn start, as the game computed it, so relics and powers
     /// that change it are reflected. Used for cycle length, which is about how fast the deck is

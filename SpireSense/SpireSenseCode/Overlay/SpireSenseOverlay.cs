@@ -29,7 +29,6 @@ public partial class SpireSenseOverlay : CanvasLayer
     private string? _lastErrorMessage;
     private object? _lastRun;
     private CycleFigures _lastCycle;
-    private AttritionForecast _lastForecast;
     private DeckAdviceResult _lastAdvice;
 
     /// <summary>Adds the overlay to the scene tree. Safe to call from mod initialization.</summary>
@@ -297,17 +296,14 @@ public partial class SpireSenseOverlay : CanvasLayer
             var cycle = CycleFigures.From(analysis, RunStats.Current);
             var stats = RunStats.Current;
             var advice = DeckAdvice.Evaluate(ActTargets.BuildInputs(analysis, stats));
-            var forecast = Attrition.Forecast(stats, RunAccess.CurrentHp ?? 0);
 
             if (_lastAnalysis == null || !analysis.Equals(_lastAnalysis)
-                || !cycle.Equals(_lastCycle) || !forecast.Equals(_lastForecast)
-                || !advice.Equals(_lastAdvice))
+                || !cycle.Equals(_lastCycle) || !advice.Equals(_lastAdvice))
             {
                 _lastAnalysis = analysis;
                 _lastCycle = cycle;
-                _lastForecast = forecast;
                 _lastAdvice = advice;
-                var text = OverlayText.Build(analysis, _settings.ShowCardNames, cycle, forecast, advice);
+                var text = OverlayText.Build(analysis, _settings.ShowCardNames, cycle, advice);
                 _summaryLabel.Text = text.Summary;
                 _countsLabel.Text = text.Counts;
                 _perTurnLabel.Text = text.PerTurn;
@@ -344,13 +340,7 @@ public partial class SpireSenseOverlay : CanvasLayer
         {
             // Identifies one turn of one combat: a new combat object or a new turn number both
             // mean a turn the figures have not counted yet.
-            var fightKey = combat.GetHashCode().ToString();
-            RunStats.Current.NoteTurn($"{fightKey}:{combat.TurnNumber}");
-
-            // The room type is read every frame rather than once, because a combat can be on screen
-            // before the room it belongs to is readable, and a fight counted as the wrong kind
-            // would stay that way for the rest of the run.
-            RunStats.Current.NoteFight(fightKey, RunAccess.CurrentFightKind);
+            RunStats.Current.NoteTurn($"{combat.GetHashCode()}:{combat.TurnNumber}");
         }
     }
 
