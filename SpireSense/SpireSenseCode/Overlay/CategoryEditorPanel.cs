@@ -1,17 +1,17 @@
 using Godot;
 using MegaCrit.Sts2.Core.Models;
 using SpireSense.SpireSenseCode.Game;
-using SpireSense.SpireSenseCode.Jobs;
+using SpireSense.SpireSenseCode.Categories;
 
 namespace SpireSense.SpireSenseCode.Overlay;
 
 /// <summary>
-/// The reclassification panel shown beside a card on the inspect screen. One toggle per job, plus a
+/// The reclassification panel shown beside a card on the inspect screen. One toggle per category, plus a
 /// reset that removes your override and returns the card to the shipped classification.
 /// </summary>
-public partial class JobEditorPanel : PanelContainer
+public partial class CategoryEditorPanel : PanelContainer
 {
-    private readonly Dictionary<Job, Button> _toggles = new();
+    private readonly Dictionary<Category, Button> _toggles = new();
     private Label _sourceLabel = null!;
     private Button _resetButton = null!;
     private string? _cardClassName;
@@ -21,7 +21,7 @@ public partial class JobEditorPanel : PanelContainer
 
     public override void _Ready()
     {
-        Name = "SpireSenseJobEditor";
+        Name = "SpireSenseCategoryEditor";
         _settings = OverlaySettings.Current;
 
         // Free-positioned rather than anchored: the card's own tooltips can sit on top of it, so it
@@ -52,25 +52,28 @@ public partial class JobEditorPanel : PanelContainer
         var column = new VBoxContainer { Name = "Column", MouseFilter = MouseFilterEnum.Ignore };
         column.AddThemeConstantOverride("separation", 6);
 
-        var heading = new Label { Text = "Spire Sense — jobs", MouseFilter = MouseFilterEnum.Ignore };
+        var heading = new Label { Text = "Spire Sense — categories", MouseFilter = MouseFilterEnum.Ignore };
         heading.AddThemeFontSizeOverride("font_size", 20);
         heading.AddThemeColorOverride("font_color", new Color("e0c070"));
         column.AddChild(heading);
 
-        foreach (var job in JobInfo.All)
+        foreach (var category in CategoryInfo.All)
         {
             var button = new Button
             {
-                Text = JobInfo.DisplayName(job).Trim(),
+                // The abbreviations match the overlay, so a toggle here reads as the row it moves.
+                // The hover text spells the category out, since "Sc." is only obvious once.
+                Text = CategoryInfo.DisplayName(category).Trim(),
+                TooltipText = CategoryInfo.LongName(category),
                 ToggleMode = true,
                 Alignment = HorizontalAlignment.Left,
                 FocusMode = FocusModeEnum.None,
             };
             button.AddThemeFontSizeOverride("font_size", 17);
-            var captured = job;
-            button.Toggled += pressed => OnJobToggled(captured, pressed);
+            var captured = category;
+            button.Toggled += pressed => OnCategoryToggled(captured, pressed);
             column.AddChild(button);
-            _toggles[job] = button;
+            _toggles[category] = button;
         }
 
         _sourceLabel = new Label { Text = "", MouseFilter = MouseFilterEnum.Ignore };
@@ -157,16 +160,16 @@ public partial class JobEditorPanel : PanelContainer
 
         if (result.Source == ClassificationSource.Ignored)
         {
-            // Curses and statuses never count toward a job, so there is nothing to reclassify.
+            // Curses and statuses never count toward a category, so there is nothing to reclassify.
             Visible = false;
             return;
         }
 
         Visible = true;
         _suppressCallbacks = true;
-        foreach (var (job, button) in _toggles)
+        foreach (var (category, button) in _toggles)
         {
-            button.ButtonPressed = result.Jobs.Contains(job);
+            button.ButtonPressed = result.Categories.Contains(category);
         }
         _suppressCallbacks = false;
 
@@ -179,20 +182,20 @@ public partial class JobEditorPanel : PanelContainer
         _resetButton.Disabled = result.Source != ClassificationSource.Override;
     }
 
-    private void OnJobToggled(Job job, bool pressed)
+    private void OnCategoryToggled(Category category, bool pressed)
     {
         if (_suppressCallbacks || _cardClassName == null)
         {
             return;
         }
 
-        var jobs = new HashSet<Job>(_toggles.Where(t => t.Value.ButtonPressed).Select(t => t.Key));
+        var categories = new HashSet<Category>(_toggles.Where(t => t.Value.ButtonPressed).Select(t => t.Key));
 
-        JobOverrides.Set(_cardClassName, jobs);
-        CardJobTip.InvalidateCache(_cardClassName);
-        ModLog.Info($"Reclassified {_cardClassName} as [{string.Join(", ", jobs)}]");
+        CategoryOverrides.Set(_cardClassName, categories);
+        CardCategoryTip.InvalidateCache(_cardClassName);
+        ModLog.Info($"Reclassified {_cardClassName} as [{string.Join(", ", categories)}]");
 
-        RefreshToggles(jobs);
+        RefreshToggles(categories);
         _sourceLabel.Text = "Your classification.";
         _resetButton.Disabled = false;
     }
@@ -204,24 +207,24 @@ public partial class JobEditorPanel : PanelContainer
             return;
         }
 
-        JobOverrides.Clear(_cardClassName);
-        CardJobTip.InvalidateCache(_cardClassName);
+        CategoryOverrides.Clear(_cardClassName);
+        CardCategoryTip.InvalidateCache(_cardClassName);
         ModLog.Info($"Reset {_cardClassName} to the shipped classification");
 
-        var jobs = JobDatabase.TryGet(_cardClassName, out var shipped) ? shipped : new HashSet<Job>();
-        RefreshToggles(jobs);
-        _sourceLabel.Text = JobDatabase.Has(_cardClassName)
+        var categories = CategoryDatabase.TryGet(_cardClassName, out var shipped) ? shipped : new HashSet<Category>();
+        RefreshToggles(categories);
+        _sourceLabel.Text = CategoryDatabase.Has(_cardClassName)
             ? "Shipped classification."
             : "Guessed: this card is not in the tables.";
         _resetButton.Disabled = true;
     }
 
-    private void RefreshToggles(IReadOnlySet<Job> jobs)
+    private void RefreshToggles(IReadOnlySet<Category> categories)
     {
         _suppressCallbacks = true;
-        foreach (var (job, button) in _toggles)
+        foreach (var (category, button) in _toggles)
         {
-            button.ButtonPressed = jobs.Contains(job);
+            button.ButtonPressed = categories.Contains(category);
         }
         _suppressCallbacks = false;
     }

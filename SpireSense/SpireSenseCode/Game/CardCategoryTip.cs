@@ -2,16 +2,16 @@ using System.Reflection;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Models;
-using SpireSense.SpireSenseCode.Jobs;
+using SpireSense.SpireSenseCode.Categories;
 using SpireSense.SpireSenseCode.Overlay;
 
 namespace SpireSense.SpireSenseCode.Game;
 
 /// <summary>
-/// Appends a "Spire Sense" entry to a card's hover tips naming the jobs it is classified under.
+/// Appends a "Spire Sense" entry to a card's hover tips naming the categories it is classified under.
 /// </summary>
 [HarmonyPatch(typeof(CardModel), nameof(CardModel.HoverTips), MethodType.Getter)]
-public static class CardJobTip
+public static class CardCategoryTip
 {
     // Title and Description are auto-properties with private setters, so the backing fields are the
     // only way to build a HoverTip that does not come from a localization table. The mod ships no
@@ -58,7 +58,7 @@ public static class CardJobTip
         }
         catch (Exception ex)
         {
-            ModLog.Warn($"Could not add the job hover tip: {ex.Message}");
+            ModLog.Warn($"Could not add the category hover tip: {ex.Message}");
         }
     }
 
@@ -82,7 +82,7 @@ public static class CardJobTip
         DescriptionField!.SetValue(boxed, Describe(result));
 
         var tip = (HoverTip)boxed;
-        tip.Id = "spiresense_jobs_" + className;
+        tip.Id = "spiresense_categories_" + className;
         tip.IsInstanced = true;
 
         Cache[className] = tip;
@@ -91,12 +91,12 @@ public static class CardJobTip
 
     private static string Describe(Classification result)
     {
-        var jobs = JobInfo.All
-            .Where(j => result.Jobs.Contains(j))
-            .Select(j => JobInfo.DisplayName(j).Trim())
+        var categories = CategoryInfo.All
+            .Where(j => result.Categories.Contains(j))
+            .Select(j => CategoryInfo.DisplayName(j).Trim())
             .ToList();
 
-        var body = jobs.Count == 0 ? "No job" : string.Join(", ", jobs);
+        var body = categories.Count == 0 ? "No category" : string.Join(", ", categories);
 
         var provenance = result.Source switch
         {

@@ -1,4 +1,4 @@
-namespace SpireSense.SpireSenseCode.Jobs;
+namespace SpireSense.SpireSenseCode.Categories;
 
 /// <summary>
 /// Sizing arithmetic for the on-screen panels. Lives here, free of engine types, so the clamping

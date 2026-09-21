@@ -1,4 +1,4 @@
-using SpireSense.SpireSenseCode.Jobs;
+using SpireSense.SpireSenseCode.Categories;
 using Xunit;
 
 namespace SpireSense.Tests;
@@ -18,25 +18,25 @@ public class DeckAnalysisTests
         var analysis = DeckAnalysis.Analyze(deck);
 
         Assert.Equal(10, analysis.TotalCards);
-        Assert.Equal(6, analysis.Counts[Job.FrontloadedDamage]);
-        Assert.Equal(4, analysis.Counts[Job.FrontloadedBlock]);
+        Assert.Equal(6, analysis.Counts[Category.FrontloadedDamage]);
+        Assert.Equal(4, analysis.Counts[Category.FrontloadedBlock]);
         Assert.Empty(analysis.UnclassifiedCardNames);
         Assert.Empty(analysis.GuessedCardNames);
     }
 
     [Fact]
-    public void CountsOneCardTowardEveryJobItPerforms()
+    public void CountsOneCardTowardEveryCategoryItPerforms()
     {
         // Shrug It Off is both block and draw, so it must appear in both buckets.
         var analysis = DeckAnalysis.Analyze(new[] { CardFacts.Named("ShrugItOff", CardKind.Skill) });
 
         Assert.Equal(1, analysis.TotalCards);
-        Assert.Equal(1, analysis.Counts[Job.FrontloadedBlock]);
-        Assert.Equal(1, analysis.Counts[Job.CardDraw]);
+        Assert.Equal(1, analysis.Counts[Category.FrontloadedBlock]);
+        Assert.Equal(1, analysis.Counts[Category.Acceleration]);
     }
 
     [Fact]
-    public void CountsCursesSeparatelyAndNotTowardAnyJob()
+    public void CountsCursesSeparatelyAndNotTowardAnyCategory()
     {
         var deck = new[]
         {
@@ -49,7 +49,7 @@ public class DeckAnalysisTests
 
         Assert.Equal(3, analysis.TotalCards);
         Assert.Equal(2, analysis.IgnoredCards);
-        Assert.Equal(1, analysis.Counts[Job.FrontloadedDamage]);
+        Assert.Equal(1, analysis.Counts[Category.FrontloadedDamage]);
         Assert.Empty(analysis.UnclassifiedCardNames);
     }
 
@@ -60,8 +60,8 @@ public class DeckAnalysisTests
 
         var analysis = DeckAnalysis.Analyze(new[] { CardFacts.Named("StrikeIronclad", CardKind.Attack), guessable });
 
-        Assert.Equal(2, analysis.Counts[Job.FrontloadedDamage]);
-        Assert.Equal(1, analysis.GuessedCounts[Job.FrontloadedDamage]);
+        Assert.Equal(2, analysis.Counts[Category.FrontloadedDamage]);
+        Assert.Equal(1, analysis.GuessedCounts[Category.FrontloadedDamage]);
         Assert.Equal(new[] { "Mystery Blade" }, analysis.GuessedCardNames);
     }
 
@@ -82,7 +82,7 @@ public class DeckAnalysisTests
         var analysis = DeckAnalysis.Analyze(Array.Empty<CardFacts>());
 
         Assert.Equal(0, analysis.TotalCards);
-        Assert.All(JobInfo.All, job => Assert.Equal(0, analysis.Counts[job]));
+        Assert.All(CategoryInfo.All, category => Assert.Equal(0, analysis.Counts[category]));
     }
 
     [Fact]
@@ -96,7 +96,7 @@ public class DeckAnalysisTests
 
         // 9 of 64 is 14.06%, which must read as 14 rather than being truncated or over-rounded.
         Assert.Equal(64, analysis.TotalCards);
-        Assert.Equal(14, analysis.PercentFor(Job.FrontloadedDamage));
+        Assert.Equal(14, analysis.PercentFor(Category.FrontloadedDamage));
     }
 
     [Fact]
@@ -108,8 +108,8 @@ public class DeckAnalysisTests
             TestData.Curse("Regret"),
         };
 
-        // The curse cannot do a job, but it is still a card you draw, so this is 50% not 100%.
-        Assert.Equal(50, DeckAnalysis.Analyze(deck).PercentFor(Job.FrontloadedDamage));
+        // The curse cannot do a category, but it is still a card you draw, so this is 50% not 100%.
+        Assert.Equal(50, DeckAnalysis.Analyze(deck).PercentFor(Category.FrontloadedDamage));
     }
 
     [Fact]
@@ -117,7 +117,7 @@ public class DeckAnalysisTests
     {
         var analysis = DeckAnalysis.Analyze(Array.Empty<CardFacts>());
 
-        Assert.All(JobInfo.All, job => Assert.Equal(0, analysis.PercentFor(job)));
+        Assert.All(CategoryInfo.All, category => Assert.Equal(0, analysis.PercentFor(category)));
     }
 
     [Fact]
@@ -128,7 +128,7 @@ public class DeckAnalysisTests
             .Concat(Enumerable.Repeat(CardFacts.Named("DefendIronclad", CardKind.Skill), 7))
             .ToList();
 
-        Assert.Equal(13, DeckAnalysis.Analyze(deck).PercentFor(Job.FrontloadedDamage));
+        Assert.Equal(13, DeckAnalysis.Analyze(deck).PercentFor(Category.FrontloadedDamage));
     }
 
     [Fact]
@@ -154,7 +154,7 @@ public class DeckAnalysisTests
     }
 
     [Fact]
-    public void SwappingOneCardForAnotherJobChangesTheAnalysis()
+    public void SwappingOneCardForAnotherCategoryChangesTheAnalysis()
     {
         var damage = DeckAnalysis.Analyze(new[] { CardFacts.Named("StrikeIronclad", CardKind.Attack) });
         var block = DeckAnalysis.Analyze(new[] { CardFacts.Named("DefendIronclad", CardKind.Skill) });

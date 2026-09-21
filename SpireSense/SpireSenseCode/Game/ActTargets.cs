@@ -1,5 +1,5 @@
 using MegaCrit.Sts2.Core.Models;
-using SpireSense.SpireSenseCode.Jobs;
+using SpireSense.SpireSenseCode.Categories;
 
 namespace SpireSense.SpireSenseCode.Game;
 
@@ -71,9 +71,11 @@ public static class ActTargets
             DamageNeededPerTurn: DeckPower.DamageNeededForElite(AverageEliteHp),
             MitigationPerTurn: stats.MitigationPerTurn,
             DamageTakenPerTurn: stats.DamageTakenPerTurn,
-            ScalingCards: analysis.Counts[Job.Scaling],
+            // Either kind of scaling answers the same question — does this deck still grow in a
+            // long fight — so they are counted together rather than judged as two separate gaps.
+            ScalingCards: analysis.Counts[Category.ScalingDamage] + analysis.Counts[Category.ScalingBlock],
             ScalingNeeded: DeckPower.ScalingNeededForAct(act),
-            DrawCards: analysis.Counts[Job.CardDraw],
-            DrawNeeded: DeckPower.DrawNeededForAct(act));
+            AccelerationCards: analysis.Counts[Category.Acceleration],
+            AccelerationNeeded: DeckPower.AccelerationNeededForAct(act));
     }
 }

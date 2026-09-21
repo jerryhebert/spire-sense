@@ -1,4 +1,4 @@
-using SpireSense.SpireSenseCode.Jobs;
+using SpireSense.SpireSenseCode.Categories;
 using Xunit;
 
 namespace SpireSense.Tests;

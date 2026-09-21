@@ -1,41 +1,51 @@
 # Spire Sense
 
-An in-run overlay for **Slay the Spire 2** that counts how many cards in your deck do each
-deckbuilding "job", following the framework in
+An in-run overlay for **Slay the Spire 2** that counts how many cards in your deck fall into each
+category, adapted from the framework in
 [Solving the Spire with Jobs](https://sts2.untapped.gg/en/articles/slay-the-spire-deckbuilding-strategy-solving-the-spire-with-jobs).
 
-| Job | Meaning |
-|---|---|
-| Frontloaded Damage | Deals real damage the turn it is played, no setup needed |
-| Area Damage | Damages every enemy, whenever that damage lands |
-| Frontloaded Block | Prevents damage the turn it is played (block, weaken-all, intangible…) |
-| Scaling | Makes the deck stronger as the fight goes on (powers, strength, engines) |
-| Card Draw / Manipulation | Draw, scry, tutor, retain, top-decking, permanent thinning |
+| Shown as | Category | Meaning |
+|---|---|---|
+| `FL. Damage` | Frontloaded Damage | Deals real damage the turn it is played, no setup needed |
+| `Sc. Damage` | Scaling Damage | Damage that grows or repeats: poison, powers, strength, engines |
+| `AOE` | Area Damage | Damages every enemy, whenever that damage lands |
+| `FL. Block` | Frontloaded Block | Prevents damage the turn it is played (block, weaken-all, intangible…) |
+| `Sc. Block` | Scaling Block | Defence that grows or repeats: plating, dexterity, barricade |
+| `Acceleration` | Acceleration | Draw, scry, tutor, retain, thinning, energy, cost reduction, extra plays |
+
+Damage and block are each split into what arrives now and what grows over a fight, because those are
+different problems: a deck that cannot kill an elite before turn five and a deck that stops scaling
+in Act 3 both lose, and one number covering both tells you which too late to act on it.
 
 The panel shows throughout a run and updates as your deck changes. It gets out of the way on the
 menus that are not about the run in front of you: settings, the compendium and the pause menu. **Insert** hides and
 shows it, and you can drag it anywhere; both are remembered. To use a different key, click the
-hotkey button on the panel and press the one you want. A card can count toward several jobs. Upgrades do not
-change a card's jobs. Curses and statuses are counted separately and never contribute to a job.
+hotkey button on the panel and press the one you want. A card can count toward several categories.
+Upgrades do not change a card's categories. Curses and statuses are counted separately and never
+contribute to a category.
 
-**Hovering any card** adds a Spire Sense line to its tooltip naming the jobs it counts for, and says
-when a classification was guessed rather than curated.
+**Hovering any card** adds a Spire Sense line to its tooltip naming the categories it counts for, and
+says when a classification was guessed rather than curated.
 
-At the top, a **deck power score** out of 100 and the job holding it back, for example
-"Power 62, held back by Block". Each job is scored on what it delivers against what your current act
-demands, and those combine so that the weakest one dominates, because runs end on the job you are
-missing rather than the one you are average at.
+At the top, set apart by its own rule, a **deck power score out of 10** and the category holding it
+back, for example "Power 6.2 / 10, held back by Block". Each category is scored on what it delivers
+against what your current act demands, and those combine so that the weakest one dominates, because
+runs end on the category you are missing rather than the one you are average at. Meeting every demand
+exactly is 7; the rest of the scale is headroom for a deck genuinely ahead of the act.
 
-Below the job counts, a **Per turn** section shows damage dealt and block gained in an average turn,
-measured from the run so far and refined with every turn you play. Before your first turn it falls
-back to an estimate from the deck, marked as such.
+Below the category counts, a **Per turn** section shows damage dealt, block gained and cards drawn in
+an average turn, measured from the run so far and refined with every turn you play. Before your first
+turn it falls back to an estimate from the deck, marked as such.
+
+Every figure on the panel is set in a monospaced font and padded to one width, so the numbers line up
+in a column instead of drifting with the proportional UI font.
 
 Both panels can be dragged anywhere, and resized by the grip in their bottom-right corner, between
 50% and 200%. Resizing scales the whole panel, text and spacing together, and the size is shared by
 both so they always match.
 
 **Disagree with a verdict?** Open any card in the inspect view, from the Compendium or from a run,
-and a panel appears with a toggle per job. Drag it by its heading if the card's own tooltips cover it. Your choice is saved to
+and a panel appears with a toggle per category. Drag it by its heading if the card's own tooltips cover it. Your choice is saved to
 `%APPDATA%\SlayTheSpire2\spiresense_overrides.json` and takes priority over the shipped tables, so
 it survives mod updates. Reset returns the card to the shipped classification.
 
@@ -79,8 +89,7 @@ snapshot of what a card contributes, and one adapter file reads that out of the 
 project compiles those source files directly rather than referencing the mod project, because the mod
 project links the game's assemblies and cannot load outside the game. That is also what lets tests run
 in CI, where no copy of the game exists. The most important tests guard the classification data
-itself: full pool coverage, no card in two tables, every AoE card also counted as damage, every job
-name valid.
+itself: full pool coverage, no card in two tables, and every category name valid.
 
 **Dependency audit.** `scripts/Audit-Dependencies.ps1` checks every direct and transitive NuGet
 package for known vulnerabilities and deprecation, and rejects floating version ranges such as

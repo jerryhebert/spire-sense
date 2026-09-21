@@ -1,85 +1,89 @@
 # How cards are classified
 
-The five jobs come from
-[Solving the Spire with Jobs](https://sts2.untapped.gg/en/articles/slay-the-spire-deckbuilding-strategy-solving-the-spire-with-jobs).
-This file is the source of truth for what each one means. The tables in this folder are produced by
-reading every card's implementation against it.
+Every card is scored against six **categories**. The tables in this folder are produced by reading
+each card's implementation against the definitions below, and this file is the source of truth.
 
 ## The rule that matters most
 
-**Evaluate all five jobs independently for every card.** They are not a taxonomy to file a card
-under. Ask five separate yes/no questions and tag every yes. Most cards do more than one job, and a
-card's headline effect never rules the others out.
+**Evaluate all six categories independently for every card.** They are not a taxonomy to file a
+card under. Ask six separate yes/no questions and tag every yes. Most cards do more than one thing,
+and a card's headline effect never rules the others out.
 
-The first pass got this wrong and produced two kinds of error, both worth keeping in mind:
+An earlier pass got this wrong twice over, and both mistakes are worth keeping in mind:
 
-- **Inferno** was tagged `Scaling` only. Its own note read "6 dmg to all enemies whenever you lose
-  HP". It is a power, so "power, therefore scaling" ended the analysis before anyone asked whether
-  it deals area damage. It does. It is `Scaling` **and** `Aoe`.
-- **Rage** was tagged `FrontloadedBlock` only. It gives 3 block per attack played this turn, so the
-  block it produces grows with how much you play. It is `FrontloadedBlock` **and** `Scaling`.
+- **Inferno** was tagged as scaling only. Its own note read "6 dmg to all enemies whenever you lose
+  HP". Being a power ended the analysis before anyone asked whether it hits everything. It does.
+- **Rage** was tagged as block only. It gives block per attack played this turn, so the block it
+  produces grows with how much you play. It is block **and** scaling.
 
 In both cases the fact that proved the missing tag was already written in the card's own note. The
 failure was not knowledge, it was stopping at the first answer.
 
-## The jobs
+## The categories
 
 ### FrontloadedDamage
 
-Deals meaningful damage to enemies the turn it is played, with no setup. Strikes, Bash, Bludgeon.
+Deals meaningful damage to enemies **the turn it is played**, with no setup. Strikes, Bash,
+Bludgeon. The test is whether it helps on turn one of a fight you walked into cold.
 
-Not this: a power, whose damage arrives later; an attack whose damage is negligible without prior
-setup; damage that needs a resource you must first accumulate.
+Not this: a power, whose damage arrives later. An attack whose damage is negligible without prior
+setup. Damage gated behind a resource you must first accumulate.
+
+### ScalingDamage
+
+Damage that **grows or repeats** rather than landing once. Poison, a power that damages each turn,
+permanent Strength, orb engines, a card that gets bigger every time you play it, exhaust or discard
+payoffs that multiply your damage, effects that double or replay attacks.
+
+This is the category for "the longer this fight goes, the more damage I do". A single enormous hit
+is not scaling damage however large it is.
 
 ### Aoe
 
-**Damages every enemy, whenever that damage happens.** A one-shot sweep, a power that hits all
-enemies each turn, a delayed bomb, a payoff that hits all enemies once a condition is met.
+**Damages every enemy, whenever that damage lands.** A one-shot sweep, a power that hits all enemies
+each turn, a delayed bomb, a payoff that hits everything once a condition is met.
 
-This is deliberately **not** a subset of `FrontloadedDamage`. The question a player asks is "does
-this deck have an answer to three enemies at once", and a power that hits all enemies every turn
-answers it. Tag `Aoe` on its own merits, and tag `FrontloadedDamage` too only if the card also meets
-that bar.
-
-Multi-hit random-target attacks are not `Aoe` unless they reliably spread across enemies.
-Applying a debuff to all enemies is not `Aoe`; damage is.
+Independent of the two damage categories above: tag those on their own merits and tag `Aoe` as well
+when the damage reaches everything. Multi-hit random-target attacks are not `Aoe` unless they
+reliably spread. A debuff applied to all enemies is not `Aoe`; damage is.
 
 ### FrontloadedBlock
 
-Prevents damage the turn it is played, with no setup. Block cards, and also weakening or stunning
-every enemy, or becoming intangible, since those stop damage just as block does.
+Prevents damage **the turn it is played**, with no setup. Block cards, and also weakening or
+stunning every enemy, or becoming intangible, since those stop damage just as block does.
 
-Not this: a power that accrues block over later turns, which is `Scaling`.
+### ScalingBlock
 
-### Scaling
+Defence that **grows or repeats**: a power granting block every turn, Plating, permanent Dexterity,
+Barricade and block-retention effects, block that scales with what you play during the turn, block
+payoffs that multiply other defence.
 
-Makes the deck do more the longer it goes on, or the more you play. Three shapes, all count:
+The Rage case lives here: block per attack played is scaling block as well as frontloaded block.
 
-1. **Across the fight.** Powers, permanent Strength, Dexterity or Focus, orb or poison engines,
-   anything that repeats every turn.
-2. **Within a turn.** Effects that grow with what you play this turn, such as Rage's block per
-   attack, or a cost that falls as you play more. These run out at end of turn and are still
-   scaling: the deck does more the more it does.
-3. **Payoffs and enablers.** Cards that are weak alone but multiply a strategy: exhaust payoffs,
-   discard payoffs, shiv or minion synergies, cards that double or replay other cards.
+### Acceleration
 
-Not this: a single large hit, however large. Applying Vulnerable or Weak by itself.
+Anything that makes the deck **go faster or do more per turn**: drawing, scrying, tutoring,
+retaining, putting cards on top of the draw pile, permanently thinning the deck, gaining energy,
+reducing costs, and effects that grant extra card plays.
 
-### CardDraw
+This is the category for tempo and consistency. It replaces what was previously called card draw,
+and is deliberately wider: energy and extra plays accelerate a deck exactly as drawing does.
 
-Draws, scries, tutors, retains, puts cards on top of the draw pile, or permanently thins the deck by
-exhausting cards out of it. Anything that improves what you hold.
-
-Not this: exhausting a single card from hand for an effect, which is a cost rather than thinning.
+Not this: exhausting a single card from hand as the cost of an effect.
 
 ## Format
 
-`jobs.<pool>.json`, keyed by the card's C# class name in the game assembly:
+`categories.<pool>.json`, keyed by the card's C# class name in the game assembly:
 
 ```json
-{ "pool": "ironclad", "cards": { "Inferno": { "jobs": ["Scaling", "Aoe"], "note": "power: 6 dmg to all enemies when you lose HP" } } }
+{
+  "pool": "ironclad",
+  "cards": {
+    "Inferno": { "categories": ["ScalingDamage", "Aoe"], "note": "power: 6 dmg to all enemies when you lose HP" }
+  }
+}
 ```
 
 `note` is one short line of evidence for the tags. If a note states a fact, the tags must reflect
-it; that mismatch is exactly how the first pass went wrong, and `JobTableDataTests` now checks for
-it mechanically.
+it; that mismatch is exactly how the first pass went wrong, and the tests now check for it
+mechanically.

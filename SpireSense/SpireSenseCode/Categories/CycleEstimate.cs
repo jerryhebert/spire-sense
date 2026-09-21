@@ -1,4 +1,4 @@
-namespace SpireSense.SpireSenseCode.Jobs;
+namespace SpireSense.SpireSenseCode.Categories;
 
 /// <summary>
 /// The arithmetic behind the Cycle figures.

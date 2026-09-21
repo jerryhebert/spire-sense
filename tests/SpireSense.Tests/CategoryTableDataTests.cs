@@ -1,5 +1,5 @@
 using System.Text.Json;
-using SpireSense.SpireSenseCode.Jobs;
+using SpireSense.SpireSenseCode.Categories;
 using Xunit;
 
 namespace SpireSense.Tests;
@@ -8,57 +8,57 @@ namespace SpireSense.Tests;
 /// Guards the shipped classification data itself. The tables are large and hand-curated, so these
 /// tests are what stop a bad edit from silently shipping.
 /// </summary>
-public class JobTableDataTests
+public class CategoryTableDataTests
 {
-    public JobTableDataTests() => TestData.LoadRealTables();
+    public CategoryTableDataTests() => TestData.LoadRealTables();
 
     [Fact]
     public void LoadsEveryPoolTable()
     {
-        Assert.Equal(6, JobDatabase.PoolCount);
+        Assert.Equal(6, CategoryDatabase.PoolCount);
     }
 
     [Fact]
     public void CoversTheWholeCardPool()
     {
         // Ironclad 90 + Silent 91 + Defect 91 + Necrobinder 91 + Regent 91 + Colorless 65.
-        Assert.Equal(519, JobDatabase.CardCount);
+        Assert.Equal(519, CategoryDatabase.CardCount);
     }
 
     [Fact]
     public void NoCardAppearsInTwoTables()
     {
         // A duplicate would silently discard one table's verdict for that card.
-        Assert.Empty(JobDatabase.Duplicates);
+        Assert.Empty(CategoryDatabase.Duplicates);
     }
 
     [Fact]
     public void AreaDamageDoesNotRequireFrontloadedDamage()
     {
-        // Area damage is its own job, so powers that hit every enemy over time can carry it alone.
+        // Area damage is its own category, so powers that hit every enemy over time can carry it alone.
         // If nothing does, the tables have slipped back to treating it as a sub-category.
-        var aoeWithoutFrontloaded = JobDatabase.All
-            .Count(e => e.Value.Contains(Job.Aoe) && !e.Value.Contains(Job.FrontloadedDamage));
+        var aoeWithoutFrontloaded = CategoryDatabase.All
+            .Count(e => e.Value.Contains(Category.Aoe) && !e.Value.Contains(Category.FrontloadedDamage));
 
         Assert.True(aoeWithoutFrontloaded > 0,
             "No card has area damage without frontloaded damage, which suggests the old subset rule crept back.");
     }
 
     [Fact]
-    public void EveryJobNameInTheRawFilesIsRecognized()
+    public void EveryCategoryNameInTheRawFilesIsRecognized()
     {
-        // JobDatabase skips unknown job names with a warning, so a typo would not fail loading.
+        // CategoryDatabase skips unknown category names with a warning, so a typo would not fail loading.
         // Reading the raw JSON catches it instead.
-        var valid = Enum.GetNames<Job>().ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var valid = Enum.GetNames<Category>().ToHashSet(StringComparer.OrdinalIgnoreCase);
         var bad = new List<string>();
 
         foreach (var (resource, root) in ReadRawTables())
         {
             foreach (var card in root.GetProperty("cards").EnumerateObject())
             {
-                foreach (var job in card.Value.GetProperty("jobs").EnumerateArray())
+                foreach (var category in card.Value.GetProperty("categories").EnumerateArray())
                 {
-                    var name = job.GetString();
+                    var name = category.GetString();
                     if (name == null || !valid.Contains(name))
                     {
                         bad.Add($"{resource}:{card.Name}:{name}");
@@ -89,10 +89,10 @@ public class JobTableDataTests
                     continue;
                 }
 
-                var jobs = card.Value.GetProperty("jobs").EnumerateArray().Select(j => j.GetString()).ToList();
-                if (!jobs.Contains(nameof(Job.Aoe)))
+                var categories = card.Value.GetProperty("categories").EnumerateArray().Select(j => j.GetString()).ToList();
+                if (!categories.Contains(nameof(Category.Aoe)))
                 {
-                    offenders.Add($"{resource}:{card.Name}: \"{note}\" tagged [{string.Join(", ", jobs)}]");
+                    offenders.Add($"{resource}:{card.Name}: \"{note}\" tagged [{string.Join(", ", categories)}]");
                 }
             }
         }
@@ -144,62 +144,62 @@ public class JobTableDataTests
     }
 
     [Fact]
-    public void MostCardsHaveAtLeastOneJob()
+    public void MostCardsHaveAtLeastOneCategory()
     {
         // Empty is legal for pure utility cards, but a large jump would mean the data regressed.
-        var empty = JobDatabase.All.Count(e => e.Value.Count == 0);
+        var empty = CategoryDatabase.All.Count(e => e.Value.Count == 0);
         Assert.InRange(empty, 0, 60);
     }
 
     [Theory]
-    // Spot checks across every pool, including multi-job cards.
-    [InlineData("StrikeIronclad", Job.FrontloadedDamage)]
-    [InlineData("DefendIronclad", Job.FrontloadedBlock)]
-    [InlineData("DemonForm", Job.Scaling)]
-    [InlineData("Thunderclap", Job.Aoe)]
-    [InlineData("BattleTrance", Job.CardDraw)]
-    [InlineData("ShrugItOff", Job.FrontloadedBlock)]
-    [InlineData("ShrugItOff", Job.CardDraw)]
-    [InlineData("NoxiousFumes", Job.Scaling)]
-    [InlineData("Defragment", Job.Scaling)]
-    public void KnownCardsHaveTheExpectedJob(string cardClassName, Job expected)
+    // Spot checks across every pool, including multi-category cards.
+    [InlineData("StrikeIronclad", Category.FrontloadedDamage)]
+    [InlineData("DefendIronclad", Category.FrontloadedBlock)]
+    [InlineData("DemonForm", Category.ScalingDamage)]
+    [InlineData("Thunderclap", Category.Aoe)]
+    [InlineData("BattleTrance", Category.Acceleration)]
+    [InlineData("ShrugItOff", Category.FrontloadedBlock)]
+    [InlineData("ShrugItOff", Category.Acceleration)]
+    [InlineData("NoxiousFumes", Category.ScalingDamage)]
+    [InlineData("Defragment", Category.ScalingDamage)]
+    public void KnownCardsHaveTheExpectedCategory(string cardClassName, Category expected)
     {
-        Assert.True(JobDatabase.TryGet(cardClassName, out var jobs), $"{cardClassName} is missing from the tables");
-        Assert.Contains(expected, jobs);
+        Assert.True(CategoryDatabase.TryGet(cardClassName, out var categories), $"{cardClassName} is missing from the tables");
+        Assert.Contains(expected, categories);
     }
 
     [Fact]
     public void ThunderclapCountsAsBothDamageAndAoe()
     {
-        Assert.True(JobDatabase.TryGet("Thunderclap", out var jobs));
-        Assert.Contains(Job.FrontloadedDamage, jobs);
-        Assert.Contains(Job.Aoe, jobs);
+        Assert.True(CategoryDatabase.TryGet("Thunderclap", out var categories));
+        Assert.Contains(Category.FrontloadedDamage, categories);
+        Assert.Contains(Category.Aoe, categories);
     }
 
     [Theory]
-    // Regressions from the first pass, which assigned each card one headline job and stopped.
+    // Regressions from the first pass, which assigned each card one headline category and stopped.
     // Powers that damage every enemy were filed as Scaling only; effects that grow within a turn
     // were filed by their immediate effect only.
-    [InlineData("Inferno", Job.Aoe)]
-    [InlineData("Inferno", Job.Scaling)]
-    [InlineData("Rage", Job.FrontloadedBlock)]
-    [InlineData("Rage", Job.Scaling)]
-    [InlineData("NoxiousFumes", Job.Aoe)]
-    [InlineData("Panache", Job.Aoe)]
-    [InlineData("Hailstorm", Job.Aoe)]
-    [InlineData("BlackHole", Job.Aoe)]
-    [InlineData("TheBomb", Job.Aoe)]
-    public void CardsMissedByTheFirstPassAreClassifiedNow(string cardClassName, Job expected)
+    [InlineData("Inferno", Category.Aoe)]
+    [InlineData("Inferno", Category.ScalingDamage)]
+    [InlineData("Rage", Category.FrontloadedBlock)]
+    [InlineData("Rage", Category.ScalingBlock)]
+    [InlineData("NoxiousFumes", Category.Aoe)]
+    [InlineData("Panache", Category.Aoe)]
+    [InlineData("Hailstorm", Category.Aoe)]
+    [InlineData("BlackHole", Category.Aoe)]
+    [InlineData("TheBomb", Category.Aoe)]
+    public void CardsMissedByTheFirstPassAreClassifiedNow(string cardClassName, Category expected)
     {
-        Assert.True(JobDatabase.TryGet(cardClassName, out var jobs), $"{cardClassName} is missing from the tables");
-        Assert.Contains(expected, jobs);
+        Assert.True(CategoryDatabase.TryGet(cardClassName, out var categories), $"{cardClassName} is missing from the tables");
+        Assert.Contains(expected, categories);
     }
 
     private static IEnumerable<(string Resource, JsonElement Root)> ReadRawTables()
     {
         var assembly = TestData.TablesAssembly;
         foreach (var name in assembly.GetManifestResourceNames()
-                     .Where(n => n.StartsWith(JobDatabase.ResourcePrefix, StringComparison.Ordinal)))
+                     .Where(n => n.StartsWith(CategoryDatabase.ResourcePrefix, StringComparison.Ordinal)))
         {
             using var stream = assembly.GetManifestResourceStream(name)!;
             using var doc = JsonDocument.Parse(stream);

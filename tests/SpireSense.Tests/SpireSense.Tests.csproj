@@ -4,7 +4,7 @@
     Tests the mod's pure logic. It deliberately does NOT reference the mod project: that project
     targets the Godot SDK and links the game's assemblies, which cannot load outside the game.
     Instead the engine-independent source files are compiled into this project directly, and the
-    same job tables are embedded under the same resource names the loader looks for.
+    same category tables are embedded under the same resource names the loader looks for.
   -->
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
@@ -23,7 +23,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="../../SpireSense/SpireSenseCode/Jobs/*.cs" Link="Linked/Jobs/%(Filename)%(Extension)" />
+    <Compile Include="../../SpireSense/SpireSenseCode/Categories/*.cs" Link="Linked/Categories/%(Filename)%(Extension)" />
     <Compile Include="../../SpireSense/SpireSenseCode/Overlay/OverlayText.cs" Link="Linked/Overlay/OverlayText.cs" />
   </ItemGroup>
 

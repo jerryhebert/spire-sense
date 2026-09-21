@@ -1,14 +1,14 @@
-namespace SpireSense.SpireSenseCode.Jobs;
+namespace SpireSense.SpireSenseCode.Categories;
 
 /// <summary>
-/// Job counts for one deck. Immutable snapshot; compare with <see cref="Equals(DeckAnalysis?)"/> to detect changes.
+/// Category counts for one deck. Immutable snapshot; compare with <see cref="Equals(DeckAnalysis?)"/> to detect changes.
 /// </summary>
 public sealed class DeckAnalysis : IEquatable<DeckAnalysis>
 {
     public int TotalCards { get; private init; }
     public int IgnoredCards { get; private init; }
-    public IReadOnlyDictionary<Job, int> Counts { get; private init; } = EmptyCounts();
-    public IReadOnlyDictionary<Job, int> GuessedCounts { get; private init; } = EmptyCounts();
+    public IReadOnlyDictionary<Category, int> Counts { get; private init; } = EmptyCounts();
+    public IReadOnlyDictionary<Category, int> GuessedCounts { get; private init; } = EmptyCounts();
     public IReadOnlyList<string> UnclassifiedCardNames { get; private init; } = Array.Empty<string>();
     public IReadOnlyList<string> GuessedCardNames { get; private init; } = Array.Empty<string>();
 
@@ -20,14 +20,14 @@ public sealed class DeckAnalysis : IEquatable<DeckAnalysis>
 
     public static readonly DeckAnalysis Empty = new();
 
-    private static Dictionary<Job, int> EmptyCounts() => JobInfo.All.ToDictionary(j => j, _ => 0);
+    private static Dictionary<Category, int> EmptyCounts() => CategoryInfo.All.ToDictionary(j => j, _ => 0);
 
     /// <summary>
-    /// What share of the deck does this job, as a whole-number percentage of every card in it.
+    /// What share of the deck does this category, as a whole-number percentage of every card in it.
     /// Curses and statuses are part of the denominator because they are part of the deck you draw
     /// from, and the header counts them too.
     /// </summary>
-    public int PercentFor(Job job) => PercentOfDeck(Counts[job]);
+    public int PercentFor(Category category) => PercentOfDeck(Counts[category]);
 
     /// <summary>A card count as a whole-number percentage of the deck.</summary>
     public int PercentOfDeck(int count) =>
@@ -67,7 +67,7 @@ public sealed class DeckAnalysis : IEquatable<DeckAnalysis>
                     ignored++;
                     continue;
                 case ClassificationSource.Heuristic:
-                    if (result.Jobs.Count == 0)
+                    if (result.Categories.Count == 0)
                     {
                         unclassified.Add(card.DisplayName);
                     }
@@ -78,12 +78,12 @@ public sealed class DeckAnalysis : IEquatable<DeckAnalysis>
                     break;
             }
 
-            foreach (var job in result.Jobs)
+            foreach (var category in result.Categories)
             {
-                counts[job]++;
+                counts[category]++;
                 if (result.Source == ClassificationSource.Heuristic)
                 {
-                    guessed[job]++;
+                    guessed[category]++;
                 }
             }
         }
@@ -106,9 +106,9 @@ public sealed class DeckAnalysis : IEquatable<DeckAnalysis>
         if (other is null) return false;
         if (ReferenceEquals(this, other)) return true;
         if (TotalCards != other.TotalCards || IgnoredCards != other.IgnoredCards) return false;
-        foreach (var job in JobInfo.All)
+        foreach (var category in CategoryInfo.All)
         {
-            if (Counts[job] != other.Counts[job] || GuessedCounts[job] != other.GuessedCounts[job]) return false;
+            if (Counts[category] != other.Counts[category] || GuessedCounts[category] != other.GuessedCounts[category]) return false;
         }
         if (Math.Abs(AvgCycleDamage - other.AvgCycleDamage) > 0.05
             || Math.Abs(AvgCycleMitigation - other.AvgCycleMitigation) > 0.05)
@@ -122,5 +122,5 @@ public sealed class DeckAnalysis : IEquatable<DeckAnalysis>
     public override bool Equals(object? obj) => Equals(obj as DeckAnalysis);
 
     public override int GetHashCode() =>
-        HashCode.Combine(TotalCards, IgnoredCards, Counts[Job.FrontloadedDamage], Counts[Job.Scaling], Counts[Job.CardDraw]);
+        HashCode.Combine(TotalCards, IgnoredCards, Counts[Category.FrontloadedDamage], Counts[Category.ScalingDamage], Counts[Category.Acceleration]);
 }

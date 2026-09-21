@@ -61,7 +61,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <!-- Card-to-job classification tables. Embedded so the mod stays a single code-only .dll (no .pck needed). -->
+        <!-- Card-to-category classification tables. Embedded so the mod stays a single code-only .dll (no .pck needed). -->
         <EmbeddedResource Include="SpireSenseCode/Data/*.json" LogicalName="SpireSense.Data.%(Filename)%(Extension)" />
     </ItemGroup>
 

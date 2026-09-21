@@ -5,7 +5,7 @@ using MegaCrit.Sts2.Core.Logging;
 using Logger = MegaCrit.Sts2.Core.Logging.Logger;
 using MegaCrit.Sts2.Core.Modding;
 using SpireSense.SpireSenseCode.Game;
-using SpireSense.SpireSenseCode.Jobs;
+using SpireSense.SpireSenseCode.Categories;
 using SpireSense.SpireSenseCode.Overlay;
 
 namespace SpireSense.SpireSenseCode;
@@ -37,20 +37,20 @@ public static class SpireSenseMod
 
         OverlaySettings.LoadAsCurrent();
 
-        JobDatabase.Load(Assembly.GetExecutingAssembly());
-        ModLog.Info($"Loaded job classifications for {JobDatabase.CardCount} cards across {JobDatabase.PoolCount} pools");
+        CategoryDatabase.Load(Assembly.GetExecutingAssembly());
+        ModLog.Info($"Loaded category classifications for {CategoryDatabase.CardCount} cards across {CategoryDatabase.PoolCount} pools");
 
         // Your own reclassifications live next to the game's other user data so they survive
         // reinstalling or updating the mod.
-        JobOverrides.FilePath = ProjectSettings.GlobalizePath("user://spiresense_overrides.json");
-        JobOverrides.Load();
-        if (JobOverrides.Count > 0)
+        CategoryOverrides.FilePath = ProjectSettings.GlobalizePath("user://spiresense_overrides.json");
+        CategoryOverrides.Load();
+        if (CategoryOverrides.Count > 0)
         {
-            ModLog.Info($"Applied {JobOverrides.Count} of your own card classifications");
+            ModLog.Info($"Applied {CategoryOverrides.Count} of your own card classifications");
         }
-        if (JobDatabase.Duplicates.Count > 0)
+        if (CategoryDatabase.Duplicates.Count > 0)
         {
-            ModLog.Warn($"Duplicate card entries across job tables: {string.Join(", ", JobDatabase.Duplicates)}");
+            ModLog.Warn($"Duplicate card entries across category tables: {string.Join(", ", CategoryDatabase.Duplicates)}");
         }
 
         // Registers this assembly's Node subclasses with Godot so the engine knows to call their
@@ -70,7 +70,7 @@ public static class SpireSenseMod
         ReportPatches(_harmony);
 
         SpireSenseOverlay.Install();
-        if (!CardJobTip.IsAvailable)
+        if (!CardCategoryTip.IsAvailable)
         {
             ModLog.Warn("Card hover tips are unavailable: the HoverTip layout changed in this game build.");
         }

@@ -1,4 +1,4 @@
-namespace SpireSense.SpireSenseCode.Jobs;
+namespace SpireSense.SpireSenseCode.Categories;
 
 /// <summary>
 /// The Cycle figures: what the deck does, divided by how long a cycle through it takes.

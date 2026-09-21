@@ -1,4 +1,4 @@
-namespace SpireSense.SpireSenseCode.Jobs;
+namespace SpireSense.SpireSenseCode.Categories;
 
 /// <summary>Minimal logging seam so the pure logic does not depend on the game's logger.</summary>
 public interface ISpireSenseLog
