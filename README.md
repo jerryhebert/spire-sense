@@ -32,11 +32,15 @@ down, which is the part worth seeing.
 **Hovering any card** adds a Spire Sense line to its tooltip naming the categories it counts for, and
 says when a classification was guessed rather than curated.
 
-At the top, set apart by its own rule, a **deck power score out of 10** and the category holding it
-back, for example "Power 6.2 / 10, held back by Block". Each category is scored on what it delivers
-against what your current act demands, and those combine so that the weakest one dominates, because
-runs end on the category you are missing rather than the one you are average at. Meeting every demand
-exactly is 7; the rest of the scale is headroom for a deck genuinely ahead of the act.
+At the top, set apart by its own rule, **what the next hard fight is likely to cost you**, for example
+"Elites cost 24 HP — you have 58". Measured from this run: the health you have actually lost in each
+kind of fight so far. It turns orange when the next one would cost more than you have left. Under it,
+the part of the deck furthest behind what this act demands, for example "weakest: Block".
+
+There used to be a deck power score out of 10 here. It was removed: its weights, its cap and its
+floor were all invented, nothing was ever checked against whether runs were won, and averaging four
+incommensurable things into one number is where the information went. Which category comes last was
+always the actionable half, so that stayed and the average did not.
 
 Below the category counts, a **Per turn** section shows damage dealt, block gained and cards drawn in
 an average turn, measured from the run so far and refined with every turn you play. Before your first

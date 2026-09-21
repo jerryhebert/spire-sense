@@ -103,6 +103,7 @@ public static class CombatTracking
 
         double dealt = 0;
         double incoming = 0;
+        double hpLost = 0;
 
         foreach (var result in results)
         {
@@ -121,11 +122,16 @@ public static class CombatTracking
                 // Only enemy damage counts. Self-damage from your own cards is a cost you chose,
                 // not pressure block has to answer.
                 incoming += Math.Max(0, result.TotalDamage);
+
+                // What a fight actually costs you is what got through. Blocked damage is pressure
+                // block answered, which is the other measurement, not attrition.
+                hpLost += landed;
             }
         }
 
         RunStats.Current.AddDamage(dealt);
         RunStats.Current.AddIncomingDamage(incoming);
+        RunStats.Current.AddHpLost(hpLost);
     }
 
     /// <summary>

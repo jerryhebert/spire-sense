@@ -28,40 +28,47 @@ Curses and statuses never contribute to a category. They are not given a row of 
 already know you took the curse. They do count toward the deck total, so they drag every percentage
 down, which is the part worth seeing.
 
-## Deck power
+## What a fight costs you
 
-The headline number at the top of the panel, set apart by a rule of its own: one score out of 10 for
-how well the deck is holding up, and the category dragging it down. `Categories/DeckPower.cs`.
+The headline at the top of the panel, set apart by a rule of its own: the health you have actually
+lost per fight this run, for the hardest kind of fight there is evidence for, against the health you
+have left. `Categories/Attrition.cs`.
 
-It is **not** a weighted sum, deliberately. A sum lets enormous damage paper over having no block,
-which is how runs actually end; the framework's claim is that you lose to the category you are
-*missing*. So each category gets an adequacy ratio, what it delivers over what this point in the run
-demands, and those combine with a harmonic mean, which is dominated by the smallest of them. Surplus
-is capped, because twice the damage you need does not make up for half the block you need.
+"Elites cost 24 HP — you have 58". It goes orange when the next fight of that kind would cost more
+than you have, and amber when you could take one but not two. Health lost, not damage thrown at you:
+what you block costs nothing. Bosses are preferred over elites and elites over ordinary fights,
+because the forecast should be about the hardest thing there is data for.
 
-The mean is then put on a **1 to 10** scale. Meeting every demand exactly is **7**: the top of the
-scale is reserved for a deck genuinely ahead of what the act asks, so 7 reads as "on track" rather
-than "perfect", and there is somewhere left to go. The mapping is linear - the curve is already in
-the harmonic mean, and bending it twice would make the number harder to reason about. Past the
-surplus cap, more of the same stops moving it.
+### What replaced the deck power score, and why
 
-Two of the four demands are grounded in real numbers rather than guesses:
+There used to be a 0–10 "deck power" score here, a harmonic mean of four adequacy ratios. It is gone.
+Its weights, its 1.5 cap, its 0.01 floor and its five-turns-to-kill-an-elite were all invented, and
+none of it was ever fitted to whether runs were actually won. Worse, the aggregation was where the
+information went: any category at zero pinned the result to the bottom of the scale, so a deck
+excellent at three things out of four scored below a deck that was mediocre at all four.
+
+What survived is the comparison, in `Categories/DeckAdvice.cs`. The four ratios are individually
+defensible — each is delivered-over-demanded in its own units — and the actionable content was always
+in which one came last. So the panel names the weakest area and does not grade the deck. A category
+is named only when at least one *measured* ratio is known, and only when it is actually behind.
+
+Two of the four are grounded in real numbers rather than guesses:
 
 - **Damage** is measured against the average starting health of an elite in your current act, read
   from the game's own encounter tables, over five turns. It rises by itself as you climb.
-- **Block** is measured against the damage enemies are actually landing on you, which the mod
-  watches the same way it watches your output. No table could be as accurate.
+- **Block** is measured against what enemies aim at you, blocked and unblocked together. Not what
+  gets through: measuring what landed let good block erase its own requirement, so a deck blocking
+  everything reported no incoming damage and dropped out of the comparison for being too good.
 - **Scaling** and **acceleration** are compared against per-act thresholds that are judgement, not
   measurement. They are the weakest inputs and are deliberately forgiving. Scaling damage and
-  scaling block are counted together here: they answer the same question, whether the deck still
-  grows in a long fight.
+  scaling block are counted together, since they answer the same question — whether the deck still
+  grows in a long fight — as a count of *cards*, not of tags: nine cards carry both categories.
 
-The limiting category is the actionable half. "6.2, held back by Block" tells you what to draft;
-"6.2" on its own does not. Until there is something to compare against the panel says `measuring…` rather
-than showing a confident zero.
+Until a turn has been played there is nothing to compare against, and an unmeasured category is NaN
+rather than zero, so it sits the comparison out instead of failing it.
 
-**Unvalidated.** The weighting is reasoned, not fitted to outcomes. Treat it as a prompt to look at
-the row it names, not as a verdict.
+**Unvalidated.** The thresholds are reasoned, not fitted to outcomes. Treat the named category as a
+prompt to look at that row, not as a verdict.
 
 ## Using it
 
@@ -86,7 +93,7 @@ the row it names, not as a verdict.
   is the way out if you ever hide the panel and bind the hotkey to something another mod has taken.
 - Below a rule, a **Per turn** section: damage dealt, block gained and cards drawn in an average
   turn.
-  - The rules between sections are real separator nodes, and the panel is built from three labels
+  - The rules between sections are real separator nodes, and the panel is built from four labels
     rather than one. A rule drawn out of box characters is a line of text like any other: it was
     the longest line on the panel, so it fixed the width, every figure sat in a column stretched
     to match, and no amount of dragging the resize grip could reach it because the text scaled
@@ -111,6 +118,11 @@ the row it names, not as a verdict.
   - The measurement is the better figure. It sees Strength, relics, powers, orbs and multi-hit
     attacks, none of which the deck data reveals. Overkill is excluded, so hitting a 5 HP enemy for
     30 counts as 5.
+- Below a rule, an **HP per fight** section: health lost in an average fight of each kind, with the
+  number of fights seen in brackets. A kind you have not fought shows an em dash rather than zero,
+  because "no elite yet" and "elites are free" are opposite facts. This is health that actually
+  came off, so blocked damage does not appear here; what enemies threw at you is the other
+  measurement, and it feeds the Block comparison instead.
 - The five damage and block categories are grouped under **Damage** and **Block** headings, and
   the rows under a heading drop the repeated half of their name. Seven identical rows read as a
   flat list of unrelated facts; the headings say what the rows share. The group headings sit in

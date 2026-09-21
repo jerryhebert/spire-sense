@@ -65,16 +65,16 @@ public static class ActTargets
     /// <summary>One-based act number, as a player would say it.</summary>
     public static int ActNumber => (RunAccess.CurrentRun?.CurrentActIndex ?? 0) + 1;
 
-    /// <summary>Assembles everything the score needs from the run and the measurements so far.</summary>
-    public static DeckPowerInputs BuildInputs(DeckAnalysis analysis, RunStats stats)
+    /// <summary>Assembles everything the advice needs from the run and the measurements so far.</summary>
+    public static DeckAdviceInputs BuildInputs(DeckAnalysis analysis, RunStats stats)
     {
         var act = ActNumber;
 
-        return new DeckPowerInputs(
+        return new DeckAdviceInputs(
             // NaN, not zero, before a turn has been played. Zero would read as a deck that deals no
             // damage rather than one nobody has watched yet, and the score would open at its floor.
             DamagePerTurn: stats.HasData ? stats.DamagePerTurn : double.NaN,
-            DamageNeededPerTurn: DeckPower.DamageNeededForElite(AverageEliteHp),
+            DamageNeededPerTurn: DeckAdvice.DamageNeededForElite(AverageEliteHp),
             MitigationPerTurn: stats.HasData ? stats.MitigationPerTurn : double.NaN,
             IncomingDamagePerTurn: stats.IncomingDamagePerTurn,
             // Either kind of scaling answers the same question — does this deck still grow in a
@@ -82,8 +82,8 @@ public static class ActTargets
             // A count of cards, not of tags: nine cards carry both scaling categories, and adding
             // the two counts let each of them fill a third of the requirement twice over.
             ScalingCards: analysis.ScalingCards,
-            ScalingNeeded: DeckPower.ScalingNeededForAct(act),
+            ScalingNeeded: DeckAdvice.ScalingNeededForAct(act),
             AccelerationCards: analysis.Counts[Category.Acceleration],
-            AccelerationNeeded: DeckPower.AccelerationNeededForAct(act));
+            AccelerationNeeded: DeckAdvice.AccelerationNeededForAct(act));
     }
 }

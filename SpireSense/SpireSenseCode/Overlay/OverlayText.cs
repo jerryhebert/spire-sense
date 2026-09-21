@@ -9,10 +9,10 @@ namespace SpireSense.SpireSenseCode.Overlay;
 /// a run of them is a line of text like any other, so it set the panel's width and left dead space
 /// to the right of every figure.
 /// </summary>
-public readonly record struct PanelText(string Summary, string Counts, string PerTurn)
+public readonly record struct PanelText(string Summary, string Counts, string PerTurn, string PerFight)
 {
     /// <summary>The parts run together, for tests and for logging.</summary>
-    public override string ToString() => $"{Summary}\n{Counts}\n{PerTurn}";
+    public override string ToString() => $"{Summary}\n{Counts}\n{PerTurn}\n{PerFight}";
 }
 
 /// <summary>Formats a <see cref="DeckAnalysis"/> as BBCode for the overlay's RichTextLabels.</summary>
@@ -50,11 +50,13 @@ public static class OverlayText
     /// </summary>
     private const string Indent = "\u00A0\u00A0";
 
-    public static PanelText Build(DeckAnalysis a, bool showCardNames, CycleFigures cycle, DeckPowerResult power)
+    public static PanelText Build(DeckAnalysis a, bool showCardNames, CycleFigures cycle,
+        AttritionForecast forecast, DeckAdviceResult advice, RunStats stats)
     {
         var summary = new StringBuilder();
         summary.Append($"[b][color={Gold}]Spire Sense[/color][/b]  [color={Dim}]{a.TotalCards} cards[/color]\n");
-        AppendPower(summary, power);
+        AppendForecast(summary, forecast);
+        AppendAdvice(summary, advice);
 
         var counts = new StringBuilder();
         AppendCategoryCounts(counts, a);
@@ -63,40 +65,68 @@ public static class OverlayText
         AppendCycle(perTurn, cycle);
         AppendFootnotes(perTurn, a, showCardNames);
 
-        return new PanelText(summary.ToString().TrimEnd('\n'), counts.ToString(), perTurn.ToString());
+        var perFight = new StringBuilder();
+        AppendPerFight(perFight, stats);
+
+        return new PanelText(summary.ToString().TrimEnd('\n'), counts.ToString(),
+            perTurn.ToString(), perFight.ToString());
     }
 
     /// <summary>
-    /// The headline number, and the category holding it back. The limiting category is the actionable half:
-    /// it says what to draft, where the score alone says only how worried to be.
+    /// What the next hard fight is likely to cost, against what you have left.
     ///
-    /// Given a rule of its own below it because it is a verdict on the whole deck rather than one
-    /// more fact about it; run together with the counts, it read as just another statistic.
+    /// This replaced a 0-10 "deck power" score, whose weights, cap and floor were all invented and
+    /// never checked against whether runs were won. This has units, and you can act on it without
+    /// knowing how it was computed: it is the number that decides whether you take the elite.
     /// </summary>
-    private static void AppendPower(StringBuilder sb, DeckPowerResult power)
+    private static void AppendForecast(StringBuilder sb, AttritionForecast forecast)
     {
-        if (!power.HasData)
+        if (!forecast.HasData)
         {
-            sb.Append($"[color={Dim}]Power: measuring…[/color]");
-            sb.Append('\n');
+            sb.Append($"[color={Dim}]Measuring your first fight\u2026[/color]\n");
             return;
         }
 
-        var colour = power.Score switch
+        var colour = forecast.WouldNotSurvive ? Warn : forecast.Marginal ? Gold : Good;
+        var cost = Mono(Attrition.Format(forecast.HpPerFight));
+        var left = Mono(forecast.CurrentHp.ToString());
+
+        sb.Append($"[b][color={colour}]{FightKindInfo.Plural(forecast.Kind)} cost {cost} HP[/color][/b]");
+        sb.Append($"  [color={Dim}]you have {left}[/color]\n");
+    }
+
+    /// <summary>
+    /// The part of the deck furthest behind what this point in the run demands. Named only, never
+    /// scored: which category comes last is the actionable fact, and averaging the four of them
+    /// into one number was where that fact used to get lost.
+    /// </summary>
+    private static void AppendAdvice(StringBuilder sb, DeckAdviceResult advice)
+    {
+        if (!advice.HasData || advice.Ratio >= DeckAdvice.Adequate)
         {
-            >= 7.0 => Good,
-            >= 4.5 => Gold,
-            _ => Warn,
-        };
+            return;
+        }
 
-        sb.Append($"[b][color={colour}]Power {Mono(power.Label)} / {Mono("10")}[/color][/b]");
-        sb.Append('\n');
+        sb.Append($"{Indent}[color={Dim}]weakest: {Escape(advice.Weakest)}[/color]\n");
+    }
 
-        // On its own line, and indented under the score it explains. Alongside it, this was the
-        // longest line on the panel, and since the panel is only as narrow as its widest line it
-        // set a floor on the whole thing — one nobody could shrink past.
-        sb.Append($"{Indent}[color={Dim}]held back by {Escape(power.LimitedBy)}[/color]");
-        sb.Append('\n');
+    /// <summary>
+    /// What each kind of fight has cost you this run. Health lost, not damage thrown at you, since
+    /// what you block costs nothing. This is how runs actually end, so it gets a section of its own.
+    /// </summary>
+    private static void AppendPerFight(StringBuilder sb, RunStats stats)
+    {
+        sb.Append($"[b][color={Gold}]HP per fight[/color][/b]\n");
+        sb.Append("[table=3]");
+
+        foreach (var kind in FightKindInfo.All)
+        {
+            var seen = stats.FightsSeen(kind);
+            AppendRow(sb, FightKindInfo.DisplayName(kind), Attrition.Format(stats.HpLostPerFight(kind)),
+                seen > 0 ? $" [color={Dim}]({seen})[/color]" : null);
+        }
+
+        sb.Append("[/table]");
     }
 
     /// <summary>

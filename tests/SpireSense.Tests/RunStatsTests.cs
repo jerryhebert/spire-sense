@@ -123,7 +123,7 @@ public class RunStatsTests
     {
         var analysis = DeckAnalysis.Analyze(Array.Empty<CardFacts>());
 
-        var text = OverlayText.Build(analysis, true, new CycleFigures(36, 23, 4.0, 7.5, Measured: true), default).ToString();
+        var text = OverlayText.Build(analysis, true, new CycleFigures(36, 23, 4.0, 7.5, Measured: true), default, default, new RunStats()).ToString();
 
         Assert.Contains("Draw:", text);
         Assert.Contains("7.5", text);
@@ -185,7 +185,7 @@ public class RunStatsTests
         // lengthens as the deck grows, so the same number meant different things in Act 1 and Act 3.
         var analysis = DeckAnalysis.Analyze(Array.Empty<CardFacts>());
 
-        var text = OverlayText.Build(analysis, true, new CycleFigures(36, 23, 4.0, 5.0, Measured: true), default).ToString();
+        var text = OverlayText.Build(analysis, true, new CycleFigures(36, 23, 4.0, 5.0, Measured: true), default, default, new RunStats()).ToString();
 
         Assert.Contains("Per turn", text);
         Assert.DoesNotContain("turns", text.Replace("Per turn", ""));
@@ -196,8 +196,8 @@ public class RunStatsTests
     {
         var analysis = DeckAnalysis.Analyze(Array.Empty<CardFacts>());
 
-        var estimated = OverlayText.Build(analysis, true, new CycleFigures(10, 5, 3.0, 5.0, Measured: false), default).ToString();
-        var measured = OverlayText.Build(analysis, true, new CycleFigures(10, 5, 3.0, 5.0, Measured: true), default).ToString();
+        var estimated = OverlayText.Build(analysis, true, new CycleFigures(10, 5, 3.0, 5.0, Measured: false), default, default, new RunStats()).ToString();
+        var measured = OverlayText.Build(analysis, true, new CycleFigures(10, 5, 3.0, 5.0, Measured: true), default, default, new RunStats()).ToString();
 
         Assert.Contains("estimated", estimated);
         Assert.DoesNotContain("estimated", measured);
