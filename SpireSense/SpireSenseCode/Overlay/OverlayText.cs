@@ -51,11 +51,10 @@ public static class OverlayText
     private const string Indent = "\u00A0\u00A0";
 
     public static PanelText Build(DeckAnalysis a, bool showCardNames, CycleFigures cycle,
-        AttritionForecast forecast, DeckAdviceResult advice)
+        DeckAdviceResult advice)
     {
         var summary = new StringBuilder();
         summary.Append($"[b][color={Gold}]Spire Sense[/color][/b]  [color={Dim}]{a.TotalCards} cards[/color]\n");
-        AppendForecast(summary, forecast);
         AppendAdvice(summary, advice);
 
         var counts = new StringBuilder();
@@ -66,29 +65,6 @@ public static class OverlayText
         AppendFootnotes(perTurn, a, showCardNames);
 
         return new PanelText(summary.ToString().TrimEnd('\n'), counts.ToString(), perTurn.ToString());
-    }
-
-    /// <summary>
-    /// What the next hard fight is likely to cost, against what you have left.
-    ///
-    /// This replaced a 0-10 "deck power" score, whose weights, cap and floor were all invented and
-    /// never checked against whether runs were won. This has units, and you can act on it without
-    /// knowing how it was computed: it is the number that decides whether you take the elite.
-    /// </summary>
-    private static void AppendForecast(StringBuilder sb, AttritionForecast forecast)
-    {
-        if (!forecast.HasData)
-        {
-            sb.Append($"[color={Dim}]Measuring your first fight\u2026[/color]\n");
-            return;
-        }
-
-        var colour = forecast.WouldNotSurvive ? Warn : forecast.Marginal ? Gold : Good;
-        var cost = Mono(Attrition.Format(forecast.HpPerFight));
-        var left = Mono(forecast.CurrentHp.ToString());
-
-        sb.Append($"[b][color={colour}]{FightKindInfo.Plural(forecast.Kind)} cost {cost} HP[/color][/b]");
-        sb.Append($"  [color={Dim}]you have {left}[/color]\n");
     }
 
     /// <summary>
@@ -103,7 +79,7 @@ public static class OverlayText
             return;
         }
 
-        sb.Append($"{Indent}[color={Dim}]weakest: {Escape(advice.Weakest)}[/color]\n");
+        sb.Append($"[color={Dim}]weakest: {Escape(advice.Weakest)}[/color]\n");
     }
 
     /// <summary>

@@ -28,29 +28,27 @@ Curses and statuses never contribute to a category. They are not given a row of 
 already know you took the curse. They do count toward the deck total, so they drag every percentage
 down, which is the part worth seeing.
 
-## What a fight costs you
+## The weakest area
 
-The headline at the top of the panel, set apart by a rule of its own: the health you have actually
-lost per fight this run, for the hardest kind of fight there is evidence for, against the health you
-have left. `Categories/Attrition.cs`.
+Under the title, the part of the deck furthest behind what this point in the run demands, for
+example "weakest: Block". `Categories/DeckAdvice.cs`. That is the whole of what the panel says about
+the deck as a whole; everything else on it is a count or a measurement.
 
-"Elites cost 24 HP — you have 58". It goes orange when the next fight of that kind would cost more
-than you have, and amber when you could take one but not two. Health lost, not damage thrown at you:
-what you block costs nothing. Bosses are preferred over elites and elites over ordinary fights,
-because the forecast should be about the hardest thing there is data for.
+### What used to be here
 
-### What replaced the deck power score, and why
+A 0-10 "deck power" score: a harmonic mean of four adequacy ratios. It is gone. Its weights, its 1.5
+cap, its 0.01 floor and its five-turns-to-kill-an-elite were all invented, and none of it was ever
+fitted to whether runs were won. The aggregation was also where the information went: any category at
+zero pinned the result to the bottom of the scale, so a deck excellent at three things out of four
+scored below a deck that was mediocre at all four.
 
-There used to be a 0–10 "deck power" score here, a harmonic mean of four adequacy ratios. It is gone.
-Its weights, its 1.5 cap, its 0.01 floor and its five-turns-to-kill-an-elite were all invented, and
-none of it was ever fitted to whether runs were actually won. Worse, the aggregation was where the
-information went: any category at zero pinned the result to the bottom of the scale, so a deck
-excellent at three things out of four scored below a deck that was mediocre at all four.
+A forecast of what the next hard fight would cost replaced it briefly, and was removed too. The
+tracking behind it is gone with it.
 
-What survived is the comparison, in `Categories/DeckAdvice.cs`. The four ratios are individually
-defensible — each is delivered-over-demanded in its own units — and the actionable content was always
-in which one came last. So the panel names the weakest area and does not grade the deck. A category
-is named only when at least one *measured* ratio is known, and only when it is actually behind.
+What survived is the comparison. The four ratios are individually defensible -- each is
+delivered-over-demanded in its own units -- and the actionable content was always in which one came
+last. So the panel names the weakest area and does not grade the deck. It names one only when at
+least one *measured* ratio is known, and only when that area is actually behind.
 
 Two of the four are grounded in real numbers rather than guesses:
 
