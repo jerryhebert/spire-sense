@@ -107,8 +107,11 @@ the row it names, not as a verdict.
   a column. The UI font is proportional, which leaves "9% (3)" and "18% (12)" different widths
   however they are padded, and the column drifts.
 - Cards the mod has no table entry for are classified by a rough heuristic and shown as
-  "(N guessed)" plus a "Guessed:" list. Cards where even the heuristic finds nothing appear under
-  "No category:".
+  "(N guessed)" plus a "Guessed:" list.
+- Cards with no category at all are not reported. Every card in the game is curated, so the only
+  ones that land there are the handful that genuinely touch no axis, such as a heal or a gold
+  payout, and a warning about those is noise on a panel you read mid-fight. Hovering the card still
+  says so, which is where the question was actually asked.
 
 ## Code layout
 

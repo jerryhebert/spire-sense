@@ -159,17 +159,14 @@ public static class OverlayText
         sb.Append("[/color]\n");
     }
 
+    /// <summary>
+    /// Cards with no category are deliberately not reported. Every card in the game is curated, so
+    /// the only ones that land there are the handful that genuinely touch no axis — a heal, a gold
+    /// payout — and a warning about those is noise on a panel read mid-fight. The hover tip still
+    /// says so on the card itself, where you asked about that card.
+    /// </summary>
     private static void AppendFootnotes(StringBuilder sb, DeckAnalysis a, bool showCardNames)
     {
-        if (a.UnclassifiedCardNames.Count > 0)
-        {
-            sb.Append($"\n[color={Warn}]No category: {a.UnclassifiedCardNames.Count}[/color]");
-            if (showCardNames)
-            {
-                sb.Append($" [color={Dim}]{NameList(a.UnclassifiedCardNames)}[/color]");
-            }
-        }
-
         if (a.GuessedCardNames.Count > 0 && showCardNames)
         {
             sb.Append($"\n[color={Dim}]Guessed: {NameList(a.GuessedCardNames)}[/color]");
