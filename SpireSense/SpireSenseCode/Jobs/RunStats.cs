@@ -28,16 +28,34 @@ public sealed class RunStats
     private string? _lastTurnKey;
 
     /// <summary>
-    /// Cards drawn at the last turn start, as the game actually computed it, so relics and powers
-    /// that change your draw shorten or lengthen the cycle correctly.
+    /// Size of the hand dealt at the last turn start, as the game computed it, so relics and powers
+    /// that change it are reflected. Used for cycle length, which is about how fast the deck is
+    /// seen, not how many cards you end up holding.
     /// </summary>
-    public double CardsDrawnPerTurn { get; private set; } = CycleEstimate.BaseCardsDrawnPerTurn;
+    public double HandDrawSize { get; private set; } = CycleEstimate.BaseCardsDrawnPerTurn;
+
+    /// <summary>Every card drawn, turn-start hands and draw effects alike.</summary>
+    public double TotalCardsDrawn { get; private set; }
+
+    /// <summary>
+    /// Cards drawn in an average turn. Unlike the hand size this includes draw from cards and
+    /// powers, so it is the number that shows whether a draw engine is actually working.
+    /// </summary>
+    public double CardsDrawnPerTurn => TurnsObserved == 0 ? 0 : TotalCardsDrawn / TurnsObserved;
 
     public void NoteHandDraw(double cards)
     {
         if (cards > 0)
         {
-            CardsDrawnPerTurn = cards;
+            HandDrawSize = cards;
+        }
+    }
+
+    public void AddCardsDrawn(int cards)
+    {
+        if (cards > 0)
+        {
+            TotalCardsDrawn += cards;
         }
     }
 
