@@ -195,6 +195,29 @@ public class CategoryTableDataTests
         Assert.Contains(expected, categories);
     }
 
+    [Fact]
+    public void MakingShivsIsFrontloadedDamageRatherThanAcceleration()
+    {
+        // Confirmed against play. Shivs are 0-cost attacks put in your hand: damage you can deal
+        // this turn, arriving as cards. The deck is not going any faster, so card generation only
+        // counts as acceleration when what it generates is gas.
+        foreach (var shivMaker in new[] { "BladeDance", "StormOfSteel", "HiddenDaggers", "LeadingStrike" })
+        {
+            Assert.True(CategoryDatabase.TryGet(shivMaker, out var categories), $"{shivMaker} is missing from the tables");
+            Assert.Contains(Category.FrontloadedDamage, categories);
+        }
+    }
+
+    [Fact]
+    public void KnifeTrapIsScalingDamage()
+    {
+        // It replays every shiv in the exhaust pile, so it pays out more the longer the fight runs.
+        // Needing those shivs banked first is what keeps it out of frontloaded damage.
+        Assert.True(CategoryDatabase.TryGet("KnifeTrap", out var categories));
+        Assert.Contains(Category.ScalingDamage, categories);
+        Assert.DoesNotContain(Category.FrontloadedDamage, categories);
+    }
+
     private static IEnumerable<(string Resource, JsonElement Root)> ReadRawTables()
     {
         var assembly = TestData.TablesAssembly;

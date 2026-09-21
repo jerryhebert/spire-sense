@@ -71,6 +71,22 @@ and is deliberately wider: energy and extra plays accelerate a deck exactly as d
 
 Not this: exhausting a single card from hand as the cost of an effect.
 
+Every card the previous scheme called card draw or deck manipulation is acceleration. That holds
+with no exceptions across all 519, so treat it as a floor when reclassifying: if an older table
+gave a card `CardDraw`, the new one owes it `Acceleration` at minimum, and anything else it does is
+tagged on top.
+
+## Worked calls
+
+Confirmed against play, and the reasoning generalizes:
+
+- **Making shivs is frontloaded damage, not acceleration.** Blade Dance and Storm of Steel put
+  0-cost attacks in your hand. Those are damage you can deal this turn, arriving as cards; the deck
+  is not going faster. Card *generation* is only acceleration when what it generates is gas.
+- **Knife Trap is scaling damage.** It replays every shiv in the exhaust pile, so it pays out more
+  the longer the fight has run. The shivs it needs must be banked first, which is what keeps it out
+  of frontloaded damage.
+
 ## Format
 
 `categories.<pool>.json`, keyed by the card's C# class name in the game assembly:
