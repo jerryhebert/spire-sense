@@ -19,8 +19,13 @@ public sealed class RunStats
     /// <summary>Block gained.</summary>
     public double TotalMitigation { get; private set; }
 
-    /// <summary>Damage enemies actually landed on you, which is what block has to keep up with.</summary>
-    public double TotalDamageTaken { get; private set; }
+    /// <summary>
+    /// Damage enemies aimed at you, blocked and unblocked alike. Deliberately not the damage that
+    /// got through: what block has to keep up with is what is being thrown, and measuring what
+    /// landed makes the requirement fall as block succeeds. A deck that blocks everything would
+    /// have reported no incoming damage at all, and dropped out of the score for being too good.
+    /// </summary>
+    public double TotalIncomingDamage { get; private set; }
 
     /// <summary>Distinct combat turns seen, which is what the totals are averaged over.</summary>
     public int TurnsObserved { get; private set; }
@@ -66,7 +71,7 @@ public sealed class RunStats
 
     public double MitigationPerTurn => TurnsObserved == 0 ? 0 : TotalMitigation / TurnsObserved;
 
-    public double DamageTakenPerTurn => TurnsObserved == 0 ? 0 : TotalDamageTaken / TurnsObserved;
+    public double IncomingDamagePerTurn => TurnsObserved == 0 ? 0 : TotalIncomingDamage / TurnsObserved;
 
     /// <summary>
     /// Registers the turn currently being played. Called every frame with a key identifying the
@@ -98,11 +103,11 @@ public sealed class RunStats
         }
     }
 
-    public void AddDamageTaken(double amount)
+    public void AddIncomingDamage(double amount)
     {
         if (amount > 0)
         {
-            TotalDamageTaken += amount;
+            TotalIncomingDamage += amount;
         }
     }
 

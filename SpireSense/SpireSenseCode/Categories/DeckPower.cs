@@ -5,7 +5,7 @@ public readonly record struct DeckPowerInputs(
     double DamagePerTurn,
     double DamageNeededPerTurn,
     double MitigationPerTurn,
-    double DamageTakenPerTurn,
+    double IncomingDamagePerTurn,
     int ScalingCards,
     int ScalingNeeded,
     int AccelerationCards,
@@ -47,21 +47,27 @@ public static class DeckPower
 
     public static DeckPowerResult Evaluate(DeckPowerInputs inputs)
     {
-        var parts = new (string Name, double Ratio)[]
+        // Measured says whether a category rests on what the run has actually done, or on counting
+        // cards against a per-act judgement call. The distinction decides whether there is a score
+        // to show at all.
+        var parts = new (string Name, double Ratio, bool Measured)[]
         {
-            ("Damage", Adequacy(inputs.DamagePerTurn, inputs.DamageNeededPerTurn)),
-            ("Block", Adequacy(inputs.MitigationPerTurn, inputs.DamageTakenPerTurn)),
-            ("Scaling", Adequacy(inputs.ScalingCards, inputs.ScalingNeeded)),
-            ("Acceleration", Adequacy(inputs.AccelerationCards, inputs.AccelerationNeeded)),
+            ("Damage", Adequacy(inputs.DamagePerTurn, inputs.DamageNeededPerTurn), true),
+            ("Block", Adequacy(inputs.MitigationPerTurn, inputs.IncomingDamagePerTurn), true),
+            ("Scaling", Adequacy(inputs.ScalingCards, inputs.ScalingNeeded), false),
+            ("Acceleration", Adequacy(inputs.AccelerationCards, inputs.AccelerationNeeded), false),
         };
 
-        // Nothing to compare against yet, in the opening turns of a run.
-        if (parts.All(p => double.IsNaN(p.Ratio)))
+        var known = parts.Where(p => !double.IsNaN(p.Ratio)).ToList();
+
+        // The card-count categories are computable the instant a run exists, so they alone were
+        // enough to report a score — and the panel duly showed a confident 1.2 before a card had
+        // been played, because unmeasured damage read as zero damage. Until the run has something
+        // to say about what the deck does, there is no score, and the panel says so.
+        if (!known.Any(p => p.Measured))
         {
             return new DeckPowerResult(0, "", HasData: false);
         }
-
-        var known = parts.Where(p => !double.IsNaN(p.Ratio)).ToList();
 
         // Harmonic mean, the standard "no better than your bottleneck" average. A geometric mean
         // was tried first and proved far too forgiving: a deck with no block at all still landed
@@ -93,7 +99,9 @@ public static class DeckPower
     /// </summary>
     private static double Adequacy(double have, double need)
     {
-        if (need <= 0 || double.IsNaN(need))
+        // NaN on either side means "not known yet", which is not the same as zero and must not be
+        // scored as a failure. A category with an unknown side sits the average out.
+        if (double.IsNaN(have) || need <= 0 || double.IsNaN(need))
         {
             return double.NaN;
         }

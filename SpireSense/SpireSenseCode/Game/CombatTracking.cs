@@ -102,7 +102,7 @@ public static class CombatTracking
         var fromEnemy = dealer is { IsEnemy: true };
 
         double dealt = 0;
-        double taken = 0;
+        double incoming = 0;
 
         foreach (var result in results)
         {
@@ -116,14 +116,16 @@ public static class CombatTracking
             }
             else if (fromEnemy && IsMine(result.Receiver))
             {
-                // Only enemy damage counts as incoming. Self-damage from your own cards is a cost
-                // you chose, not pressure block has to answer.
-                taken += landed;
+                // Blocked and unblocked together, which is the whole swing the enemy aimed at you.
+                // Counting only what got through would let good block erase its own requirement.
+                // Only enemy damage counts. Self-damage from your own cards is a cost you chose,
+                // not pressure block has to answer.
+                incoming += Math.Max(0, result.TotalDamage);
             }
         }
 
         RunStats.Current.AddDamage(dealt);
-        RunStats.Current.AddDamageTaken(taken);
+        RunStats.Current.AddIncomingDamage(incoming);
     }
 
     /// <summary>

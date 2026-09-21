@@ -12,6 +12,14 @@ public sealed class DeckAnalysis : IEquatable<DeckAnalysis>
     public IReadOnlyList<string> UnclassifiedCardNames { get; private init; } = Array.Empty<string>();
     public IReadOnlyList<string> GuessedCardNames { get; private init; } = Array.Empty<string>();
 
+    /// <summary>
+    /// Cards that scale at all, damage or block. A count of cards rather than of tags: nine cards
+    /// in the tables carry both scaling categories, so adding the two counts let each of them fill
+    /// part of the requirement twice over. The deck power score asks one question of both —
+    /// does this deck still grow in a long fight — so it wants the card count.
+    /// </summary>
+    public int ScalingCards { get; private init; }
+
     /// <summary>Estimated damage over one whole pass through the deck.</summary>
     public double AvgCycleDamage { get; private init; }
 
@@ -41,6 +49,7 @@ public sealed class DeckAnalysis : IEquatable<DeckAnalysis>
         var guessedNames = new List<string>();
         int total = 0;
         int ignored = 0;
+        int scalingCards = 0;
         decimal deckDamage = 0;
         decimal deckBlock = 0;
         int deckEnergy = 0;
@@ -78,6 +87,11 @@ public sealed class DeckAnalysis : IEquatable<DeckAnalysis>
                     break;
             }
 
+            if (result.Categories.Contains(Category.ScalingDamage) || result.Categories.Contains(Category.ScalingBlock))
+            {
+                scalingCards++;
+            }
+
             foreach (var category in result.Categories)
             {
                 counts[category]++;
@@ -92,6 +106,7 @@ public sealed class DeckAnalysis : IEquatable<DeckAnalysis>
         {
             TotalCards = total,
             IgnoredCards = ignored,
+            ScalingCards = scalingCards,
             Counts = counts,
             GuessedCounts = guessed,
             UnclassifiedCardNames = unclassified,
@@ -105,7 +120,8 @@ public sealed class DeckAnalysis : IEquatable<DeckAnalysis>
     {
         if (other is null) return false;
         if (ReferenceEquals(this, other)) return true;
-        if (TotalCards != other.TotalCards || IgnoredCards != other.IgnoredCards) return false;
+        if (TotalCards != other.TotalCards || IgnoredCards != other.IgnoredCards
+            || ScalingCards != other.ScalingCards) return false;
         foreach (var category in CategoryInfo.All)
         {
             if (Counts[category] != other.Counts[category] || GuessedCounts[category] != other.GuessedCounts[category]) return false;

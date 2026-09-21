@@ -12,6 +12,7 @@ namespace SpireSense.SpireSenseCode.Game;
 /// </summary>
 public static class ActTargets
 {
+    private static object? _cachedRun;
     private static int _cachedActIndex = -1;
     private static double _cachedEliteHp;
     private static bool _warned;
@@ -32,7 +33,9 @@ public static class ActTargets
 
             try
             {
-                if (run.CurrentActIndex == _cachedActIndex)
+                // Keyed on the run as well as the act. Keyed on the act alone, a new run's act 1
+                // was served the previous run's cached figure, since both are act index 0.
+                if (ReferenceEquals(run, _cachedRun) && run.CurrentActIndex == _cachedActIndex)
                 {
                     return _cachedEliteHp;
                 }
@@ -42,6 +45,7 @@ public static class ActTargets
                     .Select(m => (m.MinInitialHp + m.MaxInitialHp) / 2.0)
                     .ToList();
 
+                _cachedRun = run;
                 _cachedActIndex = run.CurrentActIndex;
                 _cachedEliteHp = healths.Count > 0 ? healths.Average() : double.NaN;
                 return _cachedEliteHp;
@@ -67,13 +71,17 @@ public static class ActTargets
         var act = ActNumber;
 
         return new DeckPowerInputs(
-            DamagePerTurn: stats.DamagePerTurn,
+            // NaN, not zero, before a turn has been played. Zero would read as a deck that deals no
+            // damage rather than one nobody has watched yet, and the score would open at its floor.
+            DamagePerTurn: stats.HasData ? stats.DamagePerTurn : double.NaN,
             DamageNeededPerTurn: DeckPower.DamageNeededForElite(AverageEliteHp),
-            MitigationPerTurn: stats.MitigationPerTurn,
-            DamageTakenPerTurn: stats.DamageTakenPerTurn,
+            MitigationPerTurn: stats.HasData ? stats.MitigationPerTurn : double.NaN,
+            IncomingDamagePerTurn: stats.IncomingDamagePerTurn,
             // Either kind of scaling answers the same question — does this deck still grow in a
             // long fight — so they are counted together rather than judged as two separate gaps.
-            ScalingCards: analysis.Counts[Category.ScalingDamage] + analysis.Counts[Category.ScalingBlock],
+            // A count of cards, not of tags: nine cards carry both scaling categories, and adding
+            // the two counts let each of them fill a third of the requirement twice over.
+            ScalingCards: analysis.ScalingCards,
             ScalingNeeded: DeckPower.ScalingNeededForAct(act),
             AccelerationCards: analysis.Counts[Category.Acceleration],
             AccelerationNeeded: DeckPower.AccelerationNeededForAct(act));
