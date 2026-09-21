@@ -9,10 +9,10 @@ namespace SpireSense.SpireSenseCode.Overlay;
 /// a run of them is a line of text like any other, so it set the panel's width and left dead space
 /// to the right of every figure.
 /// </summary>
-public readonly record struct PanelText(string Summary, string Counts, string PerTurn, string PerFight)
+public readonly record struct PanelText(string Summary, string Counts, string PerTurn)
 {
     /// <summary>The parts run together, for tests and for logging.</summary>
-    public override string ToString() => $"{Summary}\n{Counts}\n{PerTurn}\n{PerFight}";
+    public override string ToString() => $"{Summary}\n{Counts}\n{PerTurn}";
 }
 
 /// <summary>Formats a <see cref="DeckAnalysis"/> as BBCode for the overlay's RichTextLabels.</summary>
@@ -51,7 +51,7 @@ public static class OverlayText
     private const string Indent = "\u00A0\u00A0";
 
     public static PanelText Build(DeckAnalysis a, bool showCardNames, CycleFigures cycle,
-        AttritionForecast forecast, DeckAdviceResult advice, RunStats stats)
+        AttritionForecast forecast, DeckAdviceResult advice)
     {
         var summary = new StringBuilder();
         summary.Append($"[b][color={Gold}]Spire Sense[/color][/b]  [color={Dim}]{a.TotalCards} cards[/color]\n");
@@ -65,11 +65,7 @@ public static class OverlayText
         AppendCycle(perTurn, cycle);
         AppendFootnotes(perTurn, a, showCardNames);
 
-        var perFight = new StringBuilder();
-        AppendPerFight(perFight, stats);
-
-        return new PanelText(summary.ToString().TrimEnd('\n'), counts.ToString(),
-            perTurn.ToString(), perFight.ToString());
+        return new PanelText(summary.ToString().TrimEnd('\n'), counts.ToString(), perTurn.ToString());
     }
 
     /// <summary>
@@ -108,25 +104,6 @@ public static class OverlayText
         }
 
         sb.Append($"{Indent}[color={Dim}]weakest: {Escape(advice.Weakest)}[/color]\n");
-    }
-
-    /// <summary>
-    /// What each kind of fight has cost you this run. Health lost, not damage thrown at you, since
-    /// what you block costs nothing. This is how runs actually end, so it gets a section of its own.
-    /// </summary>
-    private static void AppendPerFight(StringBuilder sb, RunStats stats)
-    {
-        sb.Append($"[b][color={Gold}]HP per fight[/color][/b]\n");
-        sb.Append("[table=3]");
-
-        foreach (var kind in FightKindInfo.All)
-        {
-            var seen = stats.FightsSeen(kind);
-            AppendRow(sb, FightKindInfo.DisplayName(kind), Attrition.Format(stats.HpLostPerFight(kind)),
-                seen > 0 ? $" [color={Dim}]({seen})[/color]" : null);
-        }
-
-        sb.Append("[/table]");
     }
 
     /// <summary>

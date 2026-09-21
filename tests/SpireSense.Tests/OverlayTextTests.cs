@@ -11,7 +11,7 @@ public class OverlayTextTests
     private static string Render(IEnumerable<CardFacts> deck, bool showCardNames = true)
     {
         var analysis = DeckAnalysis.Analyze(deck);
-        return OverlayText.Build(analysis, showCardNames, CycleFigures.From(analysis, new RunStats()), default, default, new RunStats()).ToString();
+        return OverlayText.Build(analysis, showCardNames, CycleFigures.From(analysis, new RunStats()), default, default).ToString();
     }
 
     [Fact]
@@ -35,7 +35,7 @@ public class OverlayTextTests
     {
         // The rebind button under the counts shows the current key, so the header must not
         // duplicate it and go stale after a rebind.
-        var text = OverlayText.Build(DeckAnalysis.Empty, showCardNames: true, CycleFigures.From(DeckAnalysis.Empty, new RunStats()), default, default, new RunStats()).ToString();
+        var text = OverlayText.Build(DeckAnalysis.Empty, showCardNames: true, CycleFigures.From(DeckAnalysis.Empty, new RunStats()), default, default).ToString();
 
         Assert.Contains("0 cards", text);
         Assert.DoesNotContain("hides", text);
@@ -141,13 +141,12 @@ public class OverlayTextTests
         var stats = Fought(FightKind.Elite, 24);
 
         var text = OverlayText.Build(analysis, true, CycleFigures.From(analysis, stats),
-            Attrition.Forecast(stats, 58), default, stats);
+            Attrition.Forecast(stats, 58), default);
 
         Assert.Contains("Elites cost", text.Summary);
         Assert.DoesNotContain("Elites cost", text.Counts);
         Assert.Contains("Frontloaded", text.Counts);
         Assert.Contains("Per turn", text.PerTurn);
-        Assert.Contains("HP per fight", text.PerFight);
     }
 
     [Fact]
@@ -160,7 +159,7 @@ public class OverlayTextTests
         var stats = Fought(FightKind.Elite, 24);
 
         var text = OverlayText.Build(analysis, true, CycleFigures.From(analysis, stats),
-            Attrition.Forecast(stats, 58), default, stats).ToString();
+            Attrition.Forecast(stats, 58), default).ToString();
 
         Assert.Contains("Elites cost", text);
         Assert.Contains("24", text);
@@ -206,7 +205,7 @@ public class OverlayTextTests
         var advice = new DeckAdviceResult("Acceleration", 0.3, HasData: true);
 
         var text = OverlayText.Build(analysis, true, CycleFigures.From(analysis, stats),
-            Attrition.Forecast(stats, 58), advice, stats).ToString();
+            Attrition.Forecast(stats, 58), advice).ToString();
         var lines = text.Split('\n');
 
         var forecastLine = Assert.Single(lines, l => l.Contains("Elites cost"));
@@ -224,7 +223,7 @@ public class OverlayTextTests
         var adequate = new DeckAdviceResult("Damage", 1.2, HasData: true);
 
         var text = OverlayText.Build(analysis, true, CycleFigures.From(analysis, new RunStats()),
-            default, adequate, new RunStats()).ToString();
+            default, adequate).ToString();
 
         Assert.DoesNotContain("weakest", text);
     }

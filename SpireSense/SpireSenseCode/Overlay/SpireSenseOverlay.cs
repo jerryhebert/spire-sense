@@ -19,7 +19,6 @@ public partial class SpireSenseOverlay : CanvasLayer
     private RichTextLabel _summaryLabel = null!;
     private RichTextLabel _countsLabel = null!;
     private RichTextLabel _perTurnLabel = null!;
-    private RichTextLabel _perFightLabel = null!;
     private Button _hotkeyButton = null!;
     private bool _capturingHotkey;
     private double _pollAccumulator;
@@ -32,7 +31,6 @@ public partial class SpireSenseOverlay : CanvasLayer
     private CycleFigures _lastCycle;
     private AttritionForecast _lastForecast;
     private DeckAdviceResult _lastAdvice;
-    private string _lastFightTally = "";
 
     /// <summary>Adds the overlay to the scene tree. Safe to call from mod initialization.</summary>
     public static void Install()
@@ -101,7 +99,6 @@ public partial class SpireSenseOverlay : CanvasLayer
         _summaryLabel = CreateTextLabel("Summary");
         _countsLabel = CreateTextLabel("Counts");
         _perTurnLabel = CreateTextLabel("PerTurn");
-        _perFightLabel = CreateTextLabel("PerFight");
 
         _hotkeyButton = new Button
         {
@@ -120,8 +117,6 @@ public partial class SpireSenseOverlay : CanvasLayer
         column.AddChild(_countsLabel);
         column.AddChild(CreateRule());
         column.AddChild(_perTurnLabel);
-        column.AddChild(CreateRule());
-        column.AddChild(_perFightLabel);
         column.AddChild(_hotkeyButton);
 
         _panel.AddChild(GripLayer.Wrap(column, ResizeGrip.For(_panel, _settings)));
@@ -304,26 +299,18 @@ public partial class SpireSenseOverlay : CanvasLayer
             var advice = DeckAdvice.Evaluate(ActTargets.BuildInputs(analysis, stats));
             var forecast = Attrition.Forecast(stats, RunAccess.CurrentHp ?? 0);
 
-            // The per-fight figures live behind method calls rather than a value, so there is
-            // nothing to compare for change. This is the cheapest honest stand-in.
-            var fightTally = string.Join(",", FightKindInfo.All.Select(
-                k => $"{stats.FightsSeen(k)}:{stats.HpLost(k)}"));
-
             if (_lastAnalysis == null || !analysis.Equals(_lastAnalysis)
                 || !cycle.Equals(_lastCycle) || !forecast.Equals(_lastForecast)
-                || !advice.Equals(_lastAdvice) || fightTally != _lastFightTally)
+                || !advice.Equals(_lastAdvice))
             {
                 _lastAnalysis = analysis;
                 _lastCycle = cycle;
                 _lastForecast = forecast;
                 _lastAdvice = advice;
-                _lastFightTally = fightTally;
-
-                var text = OverlayText.Build(analysis, _settings.ShowCardNames, cycle, forecast, advice, stats);
+                var text = OverlayText.Build(analysis, _settings.ShowCardNames, cycle, forecast, advice);
                 _summaryLabel.Text = text.Summary;
                 _countsLabel.Text = text.Counts;
                 _perTurnLabel.Text = text.PerTurn;
-                _perFightLabel.Text = text.PerFight;
             }
         }
         catch (Exception ex)
