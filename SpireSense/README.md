@@ -93,7 +93,7 @@ prompt to look at that row, not as a verdict.
   is the way out if you ever hide the panel and bind the hotkey to something another mod has taken.
 - Below a rule, a **Per turn** section: damage dealt, block gained and cards drawn in an average
   turn.
-  - The rules between sections are real separator nodes, and the panel is built from four labels
+  - The rules between sections are real separator nodes, and the panel is built from three labels
     rather than one. A rule drawn out of box characters is a line of text like any other: it was
     the longest line on the panel, so it fixed the width, every figure sat in a column stretched
     to match, and no amount of dragging the resize grip could reach it because the text scaled
@@ -118,11 +118,6 @@ prompt to look at that row, not as a verdict.
   - The measurement is the better figure. It sees Strength, relics, powers, orbs and multi-hit
     attacks, none of which the deck data reveals. Overkill is excluded, so hitting a 5 HP enemy for
     30 counts as 5.
-- Below a rule, an **HP per fight** section: health lost in an average fight of each kind, with the
-  number of fights seen in brackets. A kind you have not fought shows an em dash rather than zero,
-  because "no elite yet" and "elites are free" are opposite facts. This is health that actually
-  came off, so blocked damage does not appear here; what enemies threw at you is the other
-  measurement, and it feeds the Block comparison instead.
 - The five damage and block categories are grouped under **Damage** and **Block** headings, and
   the rows under a heading drop the repeated half of their name. Seven identical rows read as a
   flat list of unrelated facts; the headings say what the rows share. The group headings sit in

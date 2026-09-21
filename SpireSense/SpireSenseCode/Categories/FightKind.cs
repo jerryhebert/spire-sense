@@ -18,14 +18,6 @@ public static class FightKindInfo
 {
     public static readonly FightKind[] All = { FightKind.Normal, FightKind.Elite, FightKind.Boss };
 
-    public static string DisplayName(FightKind kind) => kind switch
-    {
-        FightKind.Normal => "Normal",
-        FightKind.Elite => "Elite",
-        FightKind.Boss => "Boss",
-        _ => kind.ToString(),
-    };
-
     /// <summary>How the kind reads in a sentence, e.g. "Elites cost 24 HP".</summary>
     public static string Plural(FightKind kind) => kind switch
     {
