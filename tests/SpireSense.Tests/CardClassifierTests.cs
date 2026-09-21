@@ -1,4 +1,4 @@
-using SpireSense.SpireSenseCode.Jobs;
+using SpireSense.SpireSenseCode.Categories;
 using Xunit;
 
 namespace SpireSense.Tests;
@@ -13,7 +13,7 @@ public class CardClassifierTests
         var result = CardClassifier.Classify(CardFacts.Named("DemonForm", CardKind.Power));
 
         Assert.Equal(ClassificationSource.Curated, result.Source);
-        Assert.Contains(Job.Scaling, result.Jobs);
+        Assert.Contains(Category.ScalingDamage, result.Categories);
     }
 
     [Fact]
@@ -26,18 +26,18 @@ public class CardClassifierTests
         var result = CardClassifier.Classify(bodySlam);
 
         Assert.Equal(ClassificationSource.Curated, result.Source);
-        Assert.DoesNotContain(Job.FrontloadedDamage, result.Jobs);
+        Assert.DoesNotContain(Category.FrontloadedDamage, result.Categories);
     }
 
     [Theory]
     [InlineData(CardKind.Curse)]
     [InlineData(CardKind.Status)]
-    public void CursesAndStatusesNeverCountTowardAJob(CardKind kind)
+    public void CursesAndStatusesNeverCountTowardACategory(CardKind kind)
     {
         var result = CardClassifier.Classify(CardFacts.Named(TestData.UnknownCardName, kind));
 
         Assert.Equal(ClassificationSource.Ignored, result.Source);
-        Assert.Empty(result.Jobs);
+        Assert.Empty(result.Categories);
     }
 
     [Fact]
@@ -55,7 +55,7 @@ public class CardClassifierTests
         var result = CardClassifier.Classify(TestData.Power(TestData.UnknownCardName));
 
         Assert.Equal(ClassificationSource.Heuristic, result.Source);
-        Assert.Equal(new[] { Job.Scaling }, result.Jobs);
+        Assert.Equal(new[] { Category.ScalingDamage }, result.Categories);
     }
 
     [Fact]
@@ -64,8 +64,8 @@ public class CardClassifierTests
         var result = CardClassifier.Classify(TestData.Attack(TestData.UnknownCardName, 8, allEnemies: true));
 
         Assert.Equal(ClassificationSource.Heuristic, result.Source);
-        Assert.Contains(Job.FrontloadedDamage, result.Jobs);
-        Assert.Contains(Job.Aoe, result.Jobs);
+        Assert.Contains(Category.FrontloadedDamage, result.Categories);
+        Assert.Contains(Category.Aoe, result.Categories);
     }
 
     [Fact]
@@ -73,8 +73,8 @@ public class CardClassifierTests
     {
         var result = CardClassifier.Classify(TestData.Attack(TestData.UnknownCardName, 8));
 
-        Assert.Contains(Job.FrontloadedDamage, result.Jobs);
-        Assert.DoesNotContain(Job.Aoe, result.Jobs);
+        Assert.Contains(Category.FrontloadedDamage, result.Categories);
+        Assert.DoesNotContain(Category.Aoe, result.Categories);
     }
 
     [Fact]
@@ -82,7 +82,7 @@ public class CardClassifierTests
     {
         var result = CardClassifier.Classify(TestData.Attack(TestData.UnknownCardName, 0));
 
-        Assert.Empty(result.Jobs);
+        Assert.Empty(result.Categories);
     }
 
     [Fact]
@@ -90,8 +90,8 @@ public class CardClassifierTests
     {
         var result = CardClassifier.Classify(TestData.Skill(TestData.UnknownCardName, block: 5, draw: 2));
 
-        Assert.Contains(Job.FrontloadedBlock, result.Jobs);
-        Assert.Contains(Job.CardDraw, result.Jobs);
+        Assert.Contains(Category.FrontloadedBlock, result.Categories);
+        Assert.Contains(Category.Acceleration, result.Categories);
     }
 
     [Fact]
@@ -100,7 +100,7 @@ public class CardClassifierTests
         // Some cards gain block through an effect rather than a Block value.
         var card = CardFacts.Named(TestData.UnknownCardName, CardKind.Skill) with { GainsBlock = true };
 
-        Assert.Contains(Job.FrontloadedBlock, CardClassifier.Classify(card).Jobs);
+        Assert.Contains(Category.FrontloadedBlock, CardClassifier.Classify(card).Categories);
     }
 
     [Fact]
@@ -109,7 +109,7 @@ public class CardClassifierTests
         var onSelf = CardFacts.Named(TestData.UnknownCardName, CardKind.Skill) with { TargetsSelf = true, StrengthGain = 2 };
         var onEnemy = CardFacts.Named(TestData.UnknownCardName, CardKind.Skill) with { TargetsSelf = false, StrengthGain = 2 };
 
-        Assert.Contains(Job.Scaling, CardClassifier.Classify(onSelf).Jobs);
-        Assert.DoesNotContain(Job.Scaling, CardClassifier.Classify(onEnemy).Jobs);
+        Assert.Contains(Category.ScalingDamage, CardClassifier.Classify(onSelf).Categories);
+        Assert.DoesNotContain(Category.ScalingDamage, CardClassifier.Classify(onEnemy).Categories);
     }
 }

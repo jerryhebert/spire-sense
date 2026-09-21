@@ -1,14 +1,14 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace SpireSense.SpireSenseCode.Jobs;
+namespace SpireSense.SpireSenseCode.Categories;
 
 /// <summary>
 /// Your own classification decisions, stored outside the mod so they survive updates and take
 /// priority over the shipped tables. Keyed by card class name, like the tables themselves.
 /// Plain file IO rather than Godot's FileAccess, so this is unit-testable.
 /// </summary>
-public static class JobOverrides
+public static class CategoryOverrides
 {
     private sealed class OverrideFile
     {
@@ -16,7 +16,7 @@ public static class JobOverrides
         [JsonPropertyName("overrides")] public Dictionary<string, List<string>> Overrides { get; set; } = new();
     }
 
-    private static readonly Dictionary<string, IReadOnlySet<Job>> ByClassName = new(StringComparer.Ordinal);
+    private static readonly Dictionary<string, IReadOnlySet<Category>> ByClassName = new(StringComparer.Ordinal);
     private static readonly JsonSerializerOptions WriteOptions = new() { WriteIndented = true };
 
     /// <summary>Where overrides are persisted. Set once at startup by the game layer.</summary>
@@ -24,11 +24,11 @@ public static class JobOverrides
 
     public static int Count => ByClassName.Count;
 
-    public static IReadOnlyDictionary<string, IReadOnlySet<Job>> All => ByClassName;
+    public static IReadOnlyDictionary<string, IReadOnlySet<Category>> All => ByClassName;
 
-    /// <summary>An override of an empty set is meaningful: it means "this card does no job".</summary>
-    public static bool TryGet(string cardClassName, out IReadOnlySet<Job> jobs) =>
-        ByClassName.TryGetValue(cardClassName, out jobs!);
+    /// <summary>An override of an empty set is meaningful: it means "this card does no category".</summary>
+    public static bool TryGet(string cardClassName, out IReadOnlySet<Category> categories) =>
+        ByClassName.TryGetValue(cardClassName, out categories!);
 
     public static bool Has(string cardClassName) => ByClassName.ContainsKey(cardClassName);
 
@@ -46,20 +46,20 @@ public static class JobOverrides
             var file = JsonSerializer.Deserialize<OverrideFile>(File.ReadAllText(path));
             foreach (var pair in file?.Overrides ?? new Dictionary<string, List<string>>())
             {
-                var jobs = new HashSet<Job>();
+                var categories = new HashSet<Category>();
                 foreach (var name in pair.Value ?? new List<string>())
                 {
-                    if (JobInfo.TryParse(name, out var job))
+                    if (CategoryInfo.TryParse(name, out var category))
                     {
-                        jobs.Add(job);
+                        categories.Add(category);
                     }
                     else
                     {
-                        ModLog.Warn($"Ignoring unknown job '{name}' for {pair.Key} in the override file");
+                        ModLog.Warn($"Ignoring unknown category '{name}' for {pair.Key} in the override file");
                     }
                 }
 
-                ByClassName[pair.Key] = jobs;
+                ByClassName[pair.Key] = categories;
             }
         }
         catch (Exception ex)
@@ -69,10 +69,10 @@ public static class JobOverrides
         }
     }
 
-    /// <summary>Records an override and persists it. Pass an empty set to mean "no jobs".</summary>
-    public static void Set(string cardClassName, IEnumerable<Job> jobs, string? path = null)
+    /// <summary>Records an override and persists it. Pass an empty set to mean "no categories".</summary>
+    public static void Set(string cardClassName, IEnumerable<Category> categories, string? path = null)
     {
-        ByClassName[cardClassName] = new HashSet<Job>(jobs);
+        ByClassName[cardClassName] = new HashSet<Category>(categories);
         Save(path);
     }
 

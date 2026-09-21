@@ -7,7 +7,7 @@ using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Hooks;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.ValueProps;
-using SpireSense.SpireSenseCode.Jobs;
+using SpireSense.SpireSenseCode.Categories;
 
 namespace SpireSense.SpireSenseCode.Game;
 

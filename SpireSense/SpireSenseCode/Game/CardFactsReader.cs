@@ -1,6 +1,6 @@
 ﻿using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Models;
-using SpireSense.SpireSenseCode.Jobs;
+using SpireSense.SpireSenseCode.Categories;
 
 namespace SpireSense.SpireSenseCode.Game;
 

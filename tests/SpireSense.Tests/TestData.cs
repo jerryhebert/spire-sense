@@ -1,14 +1,14 @@
 using System.Reflection;
-using SpireSense.SpireSenseCode.Jobs;
+using SpireSense.SpireSenseCode.Categories;
 
 namespace SpireSense.Tests;
 
 internal static class TestData
 {
-    /// <summary>The test assembly embeds the real job tables under the same resource names as the mod.</summary>
+    /// <summary>The test assembly embeds the real category tables under the same resource names as the mod.</summary>
     public static Assembly TablesAssembly => typeof(TestData).Assembly;
 
-    public static void LoadRealTables() => JobDatabase.Load(TablesAssembly);
+    public static void LoadRealTables() => CategoryDatabase.Load(TablesAssembly);
 
     /// <summary>A card name guaranteed not to appear in the curated tables, to exercise the heuristic.</summary>
     public const string UnknownCardName = "ZzzDefinitelyNotARealCard";

@@ -1,4 +1,4 @@
-namespace SpireSense.SpireSenseCode.Jobs;
+namespace SpireSense.SpireSenseCode.Categories;
 
 /// <summary>
 /// What the deck actually did this run, as opposed to what <see cref="CycleEstimate"/> predicts it

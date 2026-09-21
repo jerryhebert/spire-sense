@@ -1,31 +1,43 @@
 # Spire Sense
 
-An in-run overlay for Slay the Spire 2 that counts how many cards in your deck do each deckbuilding
-"job", following the framework in
+An in-run overlay for Slay the Spire 2 that counts how many cards in your deck fall into each
+category, adapted from the framework in
 [Solving the Spire with Jobs](https://sts2.untapped.gg/en/articles/slay-the-spire-deckbuilding-strategy-solving-the-spire-with-jobs):
 
-| Job | Meaning |
-|---|---|
-| Frontloaded Damage | Deals real damage the turn it is played, no setup needed |
-| Area Damage | Damages every enemy, whenever that damage lands |
-| Frontloaded Block | Prevents damage the turn it is played (block, weaken-all, intangible...) |
-| Scaling | Makes the deck stronger as the fight goes on (powers, strength, engines) |
-| Card Draw / Manipulation | Draw, scry, tutor, retain, top-decking, permanent thinning |
+| Shown as | Category | Meaning |
+|---|---|---|
+| `FL. Damage` | Frontloaded Damage | Deals real damage the turn it is played, no setup needed |
+| `Sc. Damage` | Scaling Damage | Damage that grows or repeats: poison, powers, strength, engines |
+| `AOE` | Area Damage | Damages every enemy, whenever that damage lands |
+| `FL. Block` | Frontloaded Block | Prevents damage the turn it is played (block, weaken-all, intangible...) |
+| `Sc. Block` | Scaling Block | Defence that grows or repeats: plating, dexterity, barricade |
+| `Acceleration` | Acceleration | Draw, scry, tutor, retain, thinning, energy, cost reduction, extra plays |
 
-A card can count toward several jobs. Upgrades do not change a card's jobs. Curses and statuses are
-counted separately and never contribute to a job.
+Damage and block are each split into what arrives now and what grows over a fight. They fail
+differently - a deck that cannot kill an elite before turn five and a deck that runs out of road in
+Act 3 both lose, for opposite reasons - and one combined number hides which of the two you have.
+Area damage is judged independently of both, so a power that hits every enemy every turn counts as
+area damage even though nothing lands the turn you play it.
+
+A card can count toward several categories. Upgrades do not change a card's categories. Curses and
+statuses are counted separately and never contribute to a category.
 
 ## Deck power
 
-The headline number at the top of the panel: one score out of 100 for how well the deck is holding
-up, and the job dragging it down. `Jobs/DeckPower.cs`.
+The headline number at the top of the panel, set apart by a rule of its own: one score out of 10 for
+how well the deck is holding up, and the category dragging it down. `Categories/DeckPower.cs`.
 
 It is **not** a weighted sum, deliberately. A sum lets enormous damage paper over having no block,
-which is how runs actually end; the framework's claim is that you lose to the job you are *missing*.
-So each job gets an adequacy ratio, what it delivers over what this point in the run demands, and
-those combine with a harmonic mean, which is dominated by the smallest of them. Meeting every demand
-exactly scores 100. Surplus is capped, because twice the damage you need does not make up for half
-the block you need.
+which is how runs actually end; the framework's claim is that you lose to the category you are
+*missing*. So each category gets an adequacy ratio, what it delivers over what this point in the run
+demands, and those combine with a harmonic mean, which is dominated by the smallest of them. Surplus
+is capped, because twice the damage you need does not make up for half the block you need.
+
+The mean is then put on a **1 to 10** scale. Meeting every demand exactly is **7**: the top of the
+scale is reserved for a deck genuinely ahead of what the act asks, so 7 reads as "on track" rather
+than "perfect", and there is somewhere left to go. The mapping is linear - the curve is already in
+the harmonic mean, and bending it twice would make the number harder to reason about. Past the
+surplus cap, more of the same stops moving it.
 
 Two of the four demands are grounded in real numbers rather than guesses:
 
@@ -33,11 +45,13 @@ Two of the four demands are grounded in real numbers rather than guesses:
   from the game's own encounter tables, over five turns. It rises by itself as you climb.
 - **Block** is measured against the damage enemies are actually landing on you, which the mod
   watches the same way it watches your output. No table could be as accurate.
-- **Scaling** and **card draw** are compared against per-act thresholds that are judgement, not
-  measurement. They are the weakest inputs and are deliberately forgiving.
+- **Scaling** and **acceleration** are compared against per-act thresholds that are judgement, not
+  measurement. They are the weakest inputs and are deliberately forgiving. Scaling damage and
+  scaling block are counted together here: they answer the same question, whether the deck still
+  grows in a long fight.
 
-The limiting job is the actionable half. "62, held back by Block" tells you what to draft; "62" on
-its own does not. Until there is something to compare against the panel says `measuring…` rather
+The limiting category is the actionable half. "6.2, held back by Block" tells you what to draft;
+"6.2" on its own does not. Until there is something to compare against the panel says `measuring…` rather
 than showing a confident zero.
 
 **Unvalidated.** The weighting is reasoned, not fitted to outcomes. Treat it as a prompt to look at
@@ -80,22 +94,27 @@ the row it names, not as a verdict.
   - Once you have played a turn these are **measured from the run so far**: every point of damage
     dealt to enemies and every point of block gained, averaged over the turns played. They get
     steadier as the run goes on, and reset when a new run starts.
-  - Before that, and marked `estimated`, they are predicted from the deck by `Jobs/CycleEstimate.cs`:
+  - Before that, and marked `estimated`, they are predicted from the deck by `Categories/CycleEstimate.cs`:
     a cycle lasts as long as it takes to draw the deck, energy caps how much you get to play, and
     unplayable cards lengthen the cycle, so a curse lowers both numbers.
   - The measurement is the better figure. It sees Strength, relics, powers, orbs and multi-hit
     attacks, none of which the deck data reveals. Overkill is excluded, so hitting a 5 HP enemy for
     30 counts as 5.
-- Each job shows the share of your deck doing it and the card count, e.g. "14% (9)". The percentage
-  is of every card in the deck, curses and statuses included, since those are cards you still draw.
+- Each category shows the share of your deck doing it and the card count, e.g. "14% (9)". The
+  percentage is of every card in the deck, curses and statuses included, since those are cards you
+  still draw.
+- Every figure is set in a monospaced font and padded to a common width, so the panel's numbers form
+  a column. The UI font is proportional, which leaves "9% (3)" and "18% (12)" different widths
+  however they are padded, and the column drifts.
 - Cards the mod has no table entry for are classified by a rough heuristic and shown as
-  "(N guessed)" plus a "Guessed:" list. Cards where even the heuristic finds nothing appear under "No job:".
+  "(N guessed)" plus a "Guessed:" list. Cards where even the heuristic finds nothing appear under
+  "No category:".
 
 ## Code layout
 
 | Folder | Depends on the game? | Contents |
 |---|---|---|
-| `SpireSenseCode/Jobs/` | no | Job definitions, the curated table loader, the classifier, deck counting |
+| `SpireSenseCode/Categories/` | no | Category definitions, the curated table loader, the classifier, deck counting |
 | `SpireSenseCode/Overlay/OverlayText.cs` | no | Panel text formatting |
 | `SpireSenseCode/Overlay/` (rest) | yes | The Godot node, settings persistence |
 | `SpireSenseCode/Game/` | yes | Reading the current run, copying card data out of the game's models, and the hover-tip and inspect-screen patches |
@@ -109,20 +128,24 @@ is the only file that knows how to read the game's card model.
 Three sources, in priority order:
 
 1. **Your own overrides**, from the inspect-screen panel, stored in
-   `%APPDATA%\SlayTheSpire2\spiresense_overrides.json`. An override with an empty job list is
-   meaningful: it means "this card does no job". Deleting the file reverts everything.
+   `%APPDATA%\SlayTheSpire2\spiresense_overrides.json`. An override with an empty category list is
+   meaningful: it means "this card does none of them". Deleting the file reverts everything.
 2. **The curated tables** below.
 3. **A heuristic**, for cards no table knows about.
 
 - [`SpireSenseCode/Data/CLASSIFICATION.md`](SpireSenseCode/Data/CLASSIFICATION.md) defines what each
-  job means and is the specification the tables are built from. Read it before changing a verdict.
-- `SpireSenseCode/Data/jobs.<pool>.json` holds one curated entry per card, keyed by the card's C# class
-  name in the game assembly (e.g. `PommelStrike`). Each entry has a `jobs` array and a `note`.
-  These files are embedded into the dll at build time, so edit and rebuild to change a verdict.
-- `Jobs/CardClassifier.cs` applies the table first and falls back to a heuristic (Power => Scaling,
-  Attack with base damage => Frontloaded Damage, AllEnemies target => AoE, block => Frontloaded Block,
-  Cards var => Card Draw, self Strength/Dexterity => Scaling).
-- The tables were produced by reading each card's decompiled implementation against the job
+  category means and is the specification the tables are built from. Read it before changing a verdict.
+- `SpireSenseCode/Data/categories.<pool>.json` holds one curated entry per card, keyed by the card's C#
+  class name in the game assembly (e.g. `PommelStrike`). Each entry has a `categories` array and a
+  `note`. These files are embedded into the dll at build time, so edit and rebuild to change a verdict.
+- `Categories/CardClassifier.cs` applies the table first and falls back to a heuristic (Power =>
+  Scaling Damage, Attack with base damage => Frontloaded Damage, AllEnemies target => AOE, block =>
+  Frontloaded Block, Cards var => Acceleration, self Strength => Scaling Damage, self Dexterity =>
+  Scaling Block).
+- Category names retired in earlier versions still parse, so an override file written against the old
+  names keeps working: `Scaling` reads as Scaling Damage, `CardDraw` as Acceleration, `FrontloadedAoe`
+  as AOE.
+- The tables were produced by reading each card's decompiled implementation against the category
   definitions above. Judgment calls are recorded in each card's `note`.
 
 ## Building and testing

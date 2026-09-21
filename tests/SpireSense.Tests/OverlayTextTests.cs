@@ -1,4 +1,4 @@
-using SpireSense.SpireSenseCode.Jobs;
+using SpireSense.SpireSenseCode.Categories;
 using SpireSense.SpireSenseCode.Overlay;
 using Xunit;
 
@@ -21,9 +21,9 @@ public class OverlayTextTests
 
         Assert.Contains("Spire Sense", text);
         Assert.Contains("1 cards", text);
-        foreach (var job in JobInfo.All)
+        foreach (var category in CategoryInfo.All)
         {
-            Assert.Contains(JobInfo.DisplayName(job).Trim(), text);
+            Assert.Contains(CategoryInfo.DisplayName(category).Trim(), text);
         }
     }
 
@@ -52,16 +52,55 @@ public class OverlayTextTests
     [Fact]
     public void CursesAreCountedWithTheDeckNotWithTheEstimates()
     {
-        // They describe what the deck contains, so they belong above the divider with the job
+        // They describe what the deck contains, so they belong above the divider with the category
         // counts rather than below it with what the deck does.
         var text = Render(new[] { CardFacts.Named("StrikeIronclad", CardKind.Attack), TestData.Curse("Regret") });
 
         var cursesAt = text.IndexOf("Curses / Status", StringComparison.Ordinal);
-        var dividerAt = text.IndexOf('─');
+        // The last rule is the one between the counts and the estimates; an earlier one sets the
+        // power score apart at the top of the panel.
+        var dividerAt = text.LastIndexOf('─');
         var estimatesAt = text.IndexOf("Per turn", StringComparison.Ordinal);
 
         Assert.InRange(cursesAt, 0, dividerAt);
         Assert.InRange(dividerAt, 0, estimatesAt);
+    }
+
+    [Fact]
+    public void FiguresAreSetInTheMonoFontSoTheirColumnsLineUp()
+    {
+        // The UI font is proportional, so padding alone leaves "9% (3)" and "18% (12)" different
+        // widths. Every figure is wrapped for the label's mono font and padded to one width; drop
+        // either half and the panel's numbers stop lining up.
+        var text = Render(new[]
+        {
+            CardFacts.Named("StrikeIronclad", CardKind.Attack),
+            CardFacts.Named("DefendIronclad", CardKind.Skill),
+        });
+
+        var figures = System.Text.RegularExpressions.Regex
+            .Matches(text, @"\[code\](.*?)\[/code\]")
+            .Select(m => m.Groups[1].Value)
+            .ToList();
+
+        Assert.NotEmpty(figures);
+        Assert.Contains(figures, f => f.Contains('%'));
+        Assert.All(figures.Where(f => f.Contains('%')), f => Assert.Equal(figures.First(x => x.Contains('%')).Length, f.Length));
+    }
+
+    [Fact]
+    public void ThePowerScoreIsSetApartFromTheCountsBelowIt()
+    {
+        // It is a verdict on the whole deck rather than one more fact about it, and run straight
+        // into the counts it read as just another row.
+        var text = Render(new[] { CardFacts.Named("StrikeIronclad", CardKind.Attack) });
+
+        var powerAt = text.IndexOf("Power", StringComparison.Ordinal);
+        var firstDividerAt = text.IndexOf('─');
+        var firstCountAt = text.IndexOf("FL. Damage", StringComparison.Ordinal);
+
+        Assert.InRange(powerAt, 0, firstDividerAt);
+        Assert.InRange(firstDividerAt, 0, firstCountAt);
     }
 
     [Fact]
@@ -119,7 +158,7 @@ public class OverlayTextTests
     [Fact]
     public void PutsTheFiguresInAThirdColumn()
     {
-        // A spacer column keeps the numbers clear of the longest job name.
+        // A spacer column keeps the numbers clear of the longest category name.
         var text = Render(new[] { CardFacts.Named("StrikeIronclad", CardKind.Attack) });
 
         Assert.Contains("[table=3]", text);

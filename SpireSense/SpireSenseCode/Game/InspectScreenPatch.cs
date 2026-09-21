@@ -1,7 +1,7 @@
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Screens;
-using SpireSense.SpireSenseCode.Jobs;
+using SpireSense.SpireSenseCode.Categories;
 using SpireSense.SpireSenseCode.Overlay;
 
 namespace SpireSense.SpireSenseCode.Game;
@@ -17,7 +17,7 @@ namespace SpireSense.SpireSenseCode.Game;
 [HarmonyPatch]
 public static class InspectScreenPatch
 {
-    private const string PanelName = "SpireSenseJobEditor";
+    private const string PanelName = "SpireSenseCategoryEditor";
 
     // _cards and _index are private; the screen exposes no way to ask which card it is showing.
     private static readonly AccessTools.FieldRef<NInspectCardScreen, List<CardModel>?> CardsField =
@@ -31,17 +31,17 @@ public static class InspectScreenPatch
     {
         try
         {
-            if (__instance.GetNodeOrNull<JobEditorPanel>(PanelName) != null)
+            if (__instance.GetNodeOrNull<CategoryEditorPanel>(PanelName) != null)
             {
                 return;
             }
 
-            var panel = new JobEditorPanel { Name = PanelName, Visible = false };
+            var panel = new CategoryEditorPanel { Name = PanelName, Visible = false };
             __instance.AddChild(panel);
         }
         catch (Exception ex)
         {
-            ModLog.Error($"Could not attach the job editor to the inspect screen: {ex.Message}");
+            ModLog.Error($"Could not attach the category editor to the inspect screen: {ex.Message}");
         }
     }
 
@@ -51,7 +51,7 @@ public static class InspectScreenPatch
     {
         try
         {
-            var panel = __instance.GetNodeOrNull<JobEditorPanel>(PanelName);
+            var panel = __instance.GetNodeOrNull<CategoryEditorPanel>(PanelName);
             if (panel == null)
             {
                 return;
@@ -64,7 +64,7 @@ public static class InspectScreenPatch
         }
         catch (Exception ex)
         {
-            ModLog.Warn($"Could not update the job editor: {ex.Message}");
+            ModLog.Warn($"Could not update the category editor: {ex.Message}");
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿using Godot;
 using SpireSense.SpireSenseCode.Game;
-using SpireSense.SpireSenseCode.Jobs;
+using SpireSense.SpireSenseCode.Categories;
 
 namespace SpireSense.SpireSenseCode.Overlay;
 
@@ -105,6 +105,7 @@ public partial class SpireSenseOverlay : CanvasLayer
         };
         _label.AddThemeFontSizeOverride("normal_font_size", _settings.FontSize);
         _label.AddThemeFontSizeOverride("bold_font_size", _settings.FontSize);
+        ApplyMonoFont(_label, _settings.FontSize);
 
         _hotkeyButton = new Button
         {
@@ -130,6 +131,32 @@ public partial class SpireSenseOverlay : CanvasLayer
         Visible = _settings.Visible;
         _panel.Visible = false; // Stays hidden until combat is on screen.
         ModLog.Info($"Overlay installed (visible={_settings.Visible}, toggle={_settings.ParsedToggleKey}).");
+    }
+
+    /// <summary>
+    /// Gives a label a monospaced font for its figures. The panel's numbers are set in this font so
+    /// their columns line up; the UI font is proportional, which leaves "9% (3)" and "18% (12)"
+    /// visibly different widths however they are padded.
+    ///
+    /// SystemFont rather than a bundled font file, so the mod ships no font of its own: the names
+    /// are tried in order and the last two are the usual monospace aliases on Linux and on Windows.
+    /// </summary>
+    internal static void ApplyMonoFont(RichTextLabel label, int fontSize)
+    {
+        try
+        {
+            var mono = new SystemFont
+            {
+                FontNames = new[] { "Consolas", "DejaVu Sans Mono", "Courier New", "monospace" },
+            };
+            label.AddThemeFontOverride("mono_font", mono);
+            label.AddThemeFontSizeOverride("mono_font_size", fontSize);
+        }
+        catch (Exception ex)
+        {
+            // Falling back to the proportional font costs alignment, not information.
+            ModLog.Warn($"Could not apply the monospaced font; figures will not align: {ex.Message}");
+        }
     }
 
     public override void _UnhandledKeyInput(InputEvent @event)

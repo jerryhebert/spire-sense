@@ -2,16 +2,16 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace SpireSense.SpireSenseCode.Jobs;
+namespace SpireSense.SpireSenseCode.Categories;
 
 /// <summary>
-/// Hand-curated card-to-job table, loaded from the jobs.*.json files embedded in this assembly.
+/// Hand-curated card-to-category table, loaded from the categories.*.json files embedded in this assembly.
 /// Keys are the card's C# class name (e.g. "PommelStrike"), which is stable across languages.
 /// </summary>
-public static class JobDatabase
+public static class CategoryDatabase
 {
-    /// <summary>Prefix of the embedded resource names holding the job tables.</summary>
-    public const string ResourcePrefix = "SpireSense.Data.jobs.";
+    /// <summary>Prefix of the embedded resource names holding the category tables.</summary>
+    public const string ResourcePrefix = "SpireSense.Data.categories.";
 
     private sealed class PoolFile
     {
@@ -21,11 +21,11 @@ public static class JobDatabase
 
     public sealed class CardEntry
     {
-        [JsonPropertyName("jobs")] public List<string>? Jobs { get; set; }
+        [JsonPropertyName("categories")] public List<string>? Categories { get; set; }
         [JsonPropertyName("note")] public string? Note { get; set; }
     }
 
-    private static readonly Dictionary<string, IReadOnlySet<Job>> ByClassName = new(StringComparer.Ordinal);
+    private static readonly Dictionary<string, IReadOnlySet<Category>> ByClassName = new(StringComparer.Ordinal);
     private static readonly List<string> DuplicateKeys = new();
 
     public static int CardCount => ByClassName.Count;
@@ -34,9 +34,9 @@ public static class JobDatabase
     /// <summary>Card class names that appeared in more than one pool file. Should always be empty.</summary>
     public static IReadOnlyList<string> Duplicates => DuplicateKeys;
 
-    public static IReadOnlyDictionary<string, IReadOnlySet<Job>> All => ByClassName;
+    public static IReadOnlyDictionary<string, IReadOnlySet<Category>> All => ByClassName;
 
-    /// <summary>Loads every job table embedded in the given assembly, replacing anything loaded before.</summary>
+    /// <summary>Loads every category table embedded in the given assembly, replacing anything loaded before.</summary>
     public static void Load(Assembly? assembly = null)
     {
         assembly ??= Assembly.GetExecutingAssembly();
@@ -70,7 +70,7 @@ public static class JobDatabase
                 var file = JsonSerializer.Deserialize<PoolFile>(stream, options);
                 if (file?.Cards == null)
                 {
-                    ModLog.Warn($"Job table {resourceName} has no cards");
+                    ModLog.Warn($"Category table {resourceName} has no cards");
                     continue;
                 }
 
@@ -81,40 +81,40 @@ public static class JobDatabase
                     {
                         // Two tables claiming the same card would silently drop one verdict.
                         DuplicateKeys.Add(pair.Key);
-                        ModLog.Warn($"Card {pair.Key} appears in more than one job table; keeping the first");
+                        ModLog.Warn($"Card {pair.Key} appears in more than one category table; keeping the first");
                         continue;
                     }
 
-                    ByClassName[pair.Key] = ParseJobs(pair.Key, pair.Value, resourceName);
+                    ByClassName[pair.Key] = ParseCategories(pair.Key, pair.Value, resourceName);
                 }
             }
             catch (Exception ex)
             {
-                ModLog.Error($"Failed to load job table {resourceName}: {ex}");
+                ModLog.Error($"Failed to load category table {resourceName}: {ex}");
             }
         }
     }
 
-    private static IReadOnlySet<Job> ParseJobs(string className, CardEntry entry, string resourceName)
+    private static IReadOnlySet<Category> ParseCategories(string className, CardEntry entry, string resourceName)
     {
-        var jobs = new HashSet<Job>();
-        foreach (var jobName in entry.Jobs ?? new List<string>())
+        var categories = new HashSet<Category>();
+        foreach (var categoryName in entry.Categories ?? new List<string>())
         {
-            if (JobInfo.TryParse(jobName, out var job))
+            if (CategoryInfo.TryParse(categoryName, out var category))
             {
-                jobs.Add(job);
+                categories.Add(category);
             }
             else
             {
-                ModLog.Warn($"Unknown job '{jobName}' on card {className} in {resourceName}");
+                ModLog.Warn($"Unknown category '{categoryName}' on card {className} in {resourceName}");
             }
         }
 
-        return jobs;
+        return categories;
     }
 
-    public static bool TryGet(string cardClassName, out IReadOnlySet<Job> jobs) =>
-        ByClassName.TryGetValue(cardClassName, out jobs!);
+    public static bool TryGet(string cardClassName, out IReadOnlySet<Category> categories) =>
+        ByClassName.TryGetValue(cardClassName, out categories!);
 
     public static bool Has(string cardClassName) => ByClassName.ContainsKey(cardClassName);
 }

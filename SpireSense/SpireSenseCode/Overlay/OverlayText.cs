@@ -1,5 +1,5 @@
 using System.Text;
-using SpireSense.SpireSenseCode.Jobs;
+using SpireSense.SpireSenseCode.Categories;
 
 namespace SpireSense.SpireSenseCode.Overlay;
 
@@ -21,13 +21,21 @@ public static class OverlayText
     private const char DividerChar = '─';
     private const int DividerWidth = 34;
 
+    /// <summary>
+    /// Width every figure is padded to. In the proportional UI font "9% (3)" and "18% (12)" are
+    /// different widths even sharing a column, so figures are set in the mono font and padded to a
+    /// common width; the digits, brackets and decimal points then line up down the whole panel.
+    /// </summary>
+    private const int FigureWidth = 9;
+
     public static string Build(DeckAnalysis a, bool showCardNames, CycleFigures cycle, DeckPowerResult power)
     {
         var sb = new StringBuilder();
         sb.Append($"[b][color={Gold}]Spire Sense[/color][/b]  [color={Dim}]{a.TotalCards} cards[/color]\n");
 
         AppendPower(sb, power);
-        AppendJobCounts(sb, a);
+        AppendDivider(sb, leadingBlankLine: false);
+        AppendCategoryCounts(sb, a);
         AppendDivider(sb);
         AppendCycle(sb, cycle);
         AppendFootnotes(sb, a, showCardNames);
@@ -36,8 +44,11 @@ public static class OverlayText
     }
 
     /// <summary>
-    /// The headline number, and the job holding it back. The limiting job is the actionable half:
+    /// The headline number, and the category holding it back. The limiting category is the actionable half:
     /// it says what to draft, where the score alone says only how worried to be.
+    ///
+    /// Given a rule of its own below it because it is a verdict on the whole deck rather than one
+    /// more fact about it; run together with the counts, it read as just another statistic.
     /// </summary>
     private static void AppendPower(StringBuilder sb, DeckPowerResult power)
     {
@@ -50,35 +61,35 @@ public static class OverlayText
 
         var colour = power.Score switch
         {
-            >= 80 => Good,
-            >= 50 => Gold,
+            >= 7.0 => Good,
+            >= 4.5 => Gold,
             _ => Warn,
         };
 
-        sb.Append($"[b][color={colour}]Power {power.Score}[/color][/b]");
+        sb.Append($"[b][color={colour}]Power {Mono(power.Label)} / {Mono("10")}[/color][/b]");
         sb.Append($"  [color={Dim}]held back by {Escape(power.LimitedBy)}[/color]");
         sb.Append('\n');
     }
 
     /// <summary>
     /// What the deck contains. Three columns, the middle one empty, which pushes the figures clear
-    /// of the longest job name instead of crowding it.
+    /// of the longest category name instead of crowding it.
     /// </summary>
-    private static void AppendJobCounts(StringBuilder sb, DeckAnalysis a)
+    private static void AppendCategoryCounts(StringBuilder sb, DeckAnalysis a)
     {
         sb.Append("[table=3]");
 
-        foreach (var job in JobInfo.All)
+        foreach (var category in CategoryInfo.All)
         {
-            var guessed = a.GuessedCounts[job];
-            var figure = $"{a.PercentFor(job)}% ({a.Counts[job]})";
+            var guessed = a.GuessedCounts[category];
+            var figure = $"{a.PercentFor(category)}% ({a.Counts[category]})";
 
-            AppendRow(sb, JobInfo.DisplayName(job), figure,
+            AppendRow(sb, CategoryInfo.DisplayName(category), figure,
                 guessed > 0 ? $" [color={Dim}]({guessed} guessed)[/color]" : null);
         }
 
         // Also a fact about what the deck contains, so it belongs with the counts rather than down
-        // with the estimates. Dimmed, because unlike the rows above it is not a job.
+        // with the estimates. Dimmed, because unlike the rows above it is not a category.
         if (a.IgnoredCards > 0)
         {
             AppendRow(sb, "Curses / Status", $"{a.PercentOfDeck(a.IgnoredCards)}% ({a.IgnoredCards})", dim: true);
@@ -114,12 +125,14 @@ public static class OverlayText
 
     private static void AppendRow(StringBuilder sb, string label, string figure, string? suffix = null, bool dim = false)
     {
+        var value = Mono(figure.PadLeft(FigureWidth));
+
         sb.Append("[cell]");
         sb.Append(dim ? $"[color={Dim}]{Escape(label)}[/color]" : Escape(label));
         sb.Append("[/cell][cell]");
         sb.Append(ColumnGap);
         sb.Append("[/cell][cell]");
-        sb.Append(dim ? $"[color={Dim}]{Escape(figure)}[/color]" : $"[b]{Escape(figure)}[/b]");
+        sb.Append(dim ? $"[color={Dim}]{value}[/color]" : $"[b]{value}[/b]");
         if (suffix != null)
         {
             sb.Append(suffix);
@@ -127,10 +140,20 @@ public static class OverlayText
         sb.Append("[/cell]");
     }
 
-    /// <summary>A rule separating what the deck contains from what it is estimated to do with it.</summary>
-    private static void AppendDivider(StringBuilder sb)
+    /// <summary>
+    /// Sets text in the label's mono font. A RichTextLabel reaches that font only through [lb]code],
+    /// so the tag is doing the work of a font switch here and carries none of its usual meaning.
+    /// </summary>
+    private static string Mono(string text) => $"[code]{Escape(text)}[/code]";
+
+    /// <summary>A rule separating one part of the panel from the next.</summary>
+    private static void AppendDivider(StringBuilder sb, bool leadingBlankLine = true)
     {
-        sb.Append('\n');
+        if (leadingBlankLine)
+        {
+            sb.Append('\n');
+        }
+
         sb.Append($"[color={Divider}]");
         sb.Append(new string(DividerChar, DividerWidth));
         sb.Append("[/color]\n");
@@ -140,7 +163,7 @@ public static class OverlayText
     {
         if (a.UnclassifiedCardNames.Count > 0)
         {
-            sb.Append($"\n[color={Warn}]No job: {a.UnclassifiedCardNames.Count}[/color]");
+            sb.Append($"\n[color={Warn}]No category: {a.UnclassifiedCardNames.Count}[/color]");
             if (showCardNames)
             {
                 sb.Append($" [color={Dim}]{NameList(a.UnclassifiedCardNames)}[/color]");

@@ -1,4 +1,4 @@
-namespace SpireSense.SpireSenseCode.Jobs;
+namespace SpireSense.SpireSenseCode.Categories;
 
 /// <summary>Broad category of a card, mirroring the game's CardType without depending on it.</summary>
 public enum CardKind

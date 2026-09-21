@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using Godot;
-using SpireSense.SpireSenseCode.Jobs;
+using SpireSense.SpireSenseCode.Categories;
 using FileAccess = Godot.FileAccess;
 
 namespace SpireSense.SpireSenseCode.Overlay;
