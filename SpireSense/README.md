@@ -4,14 +4,18 @@ An in-run overlay for Slay the Spire 2 that counts how many cards in your deck f
 category, adapted from the framework in
 [Solving the Spire with Jobs](https://sts2.untapped.gg/en/articles/slay-the-spire-deckbuilding-strategy-solving-the-spire-with-jobs):
 
-| Shown as | Category | Meaning |
+| On the panel | Category | Meaning |
 |---|---|---|
-| `FL. Damage` | Frontloaded Damage | Deals real damage the turn it is played, no setup needed |
-| `Sc. Damage` | Scaling Damage | Damage that grows or repeats: poison, powers, strength, engines |
-| `AOE` | Area Damage | Damages every enemy, whenever that damage lands |
-| `FL. Block` | Frontloaded Block | Prevents damage the turn it is played (block, weaken-all, intangible...) |
-| `Sc. Block` | Scaling Block | Defence that grows or repeats: plating, dexterity, barricade |
+| **Damage** → `Frontloaded` | Frontloaded Damage | Deals real damage the turn it is played, no setup needed |
+| **Damage** → `Scaling` | Scaling Damage | Damage that grows or repeats: poison, powers, strength, engines |
+| **Damage** → `AOE` | Area Damage | Damages every enemy, whenever that damage lands |
+| **Block** → `Frontloaded` | Frontloaded Block | Prevents damage the turn it is played (block, weaken-all, intangible...) |
+| **Block** → `Scaling` | Scaling Block | Defence that grows or repeats: plating, dexterity, barricade |
 | `Acceleration` | Acceleration | Draw, scry, tutor, retain, thinning, energy, cost reduction, extra plays |
+
+The panel groups the first five under **Damage** and **Block** headings, so a row says only which
+kind it is. Hover tips and the reclassification panel name them in full, since a category on its own
+needs to say which half it belongs to.
 
 Damage and block are each split into what arrives now and what grows over a fight. They fail
 differently - a deck that cannot kill an elite before turn five and a deck that runs out of road in
@@ -19,8 +23,10 @@ Act 3 both lose, for opposite reasons - and one combined number hides which of t
 Area damage is judged independently of both, so a power that hits every enemy every turn counts as
 area damage even though nothing lands the turn you play it.
 
-A card can count toward several categories. Upgrades do not change a card's categories. Curses and
-statuses are counted separately and never contribute to a category.
+A card can count toward several categories. Upgrades do not change a card's categories.
+Curses and statuses never contribute to a category. They are not given a row of their own either — you
+already know you took the curse. They do count toward the deck total, so they drag every percentage
+down, which is the part worth seeing.
 
 ## Deck power
 
@@ -100,6 +106,10 @@ the row it names, not as a verdict.
   - The measurement is the better figure. It sees Strength, relics, powers, orbs and multi-hit
     attacks, none of which the deck data reveals. Overkill is excluded, so hitting a 5 HP enemy for
     30 counts as 5.
+- The five damage and block categories are grouped under **Damage** and **Block** headings, and
+  the rows under a heading drop the repeated half of their name. Seven identical rows read as a
+  flat list of unrelated facts; the headings say what the rows share. The group headings sit in
+  the same BBCode table as the rows, which is what keeps every figure in one column.
 - Each category shows the share of your deck doing it and the card count, e.g. "14% (9)". The
   percentage is of every card in the deck, curses and statuses included, since those are cards you
   still draw.

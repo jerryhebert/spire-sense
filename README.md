@@ -4,14 +4,18 @@ An in-run overlay for **Slay the Spire 2** that counts how many cards in your de
 category, adapted from the framework in
 [Solving the Spire with Jobs](https://sts2.untapped.gg/en/articles/slay-the-spire-deckbuilding-strategy-solving-the-spire-with-jobs).
 
-| Shown as | Category | Meaning |
+| On the panel | Category | Meaning |
 |---|---|---|
-| `FL. Damage` | Frontloaded Damage | Deals real damage the turn it is played, no setup needed |
-| `Sc. Damage` | Scaling Damage | Damage that grows or repeats: poison, powers, strength, engines |
-| `AOE` | Area Damage | Damages every enemy, whenever that damage lands |
-| `FL. Block` | Frontloaded Block | Prevents damage the turn it is played (block, weaken-all, intangible…) |
-| `Sc. Block` | Scaling Block | Defence that grows or repeats: plating, dexterity, barricade |
+| **Damage** → `Frontloaded` | Frontloaded Damage | Deals real damage the turn it is played, no setup needed |
+| **Damage** → `Scaling` | Scaling Damage | Damage that grows or repeats: poison, powers, strength, engines |
+| **Damage** → `AOE` | Area Damage | Damages every enemy, whenever that damage lands |
+| **Block** → `Frontloaded` | Frontloaded Block | Prevents damage the turn it is played (block, weaken-all, intangible…) |
+| **Block** → `Scaling` | Scaling Block | Defence that grows or repeats: plating, dexterity, barricade |
 | `Acceleration` | Acceleration | Draw, scry, tutor, retain, thinning, energy, cost reduction, extra plays |
+
+The panel groups the first five under **Damage** and **Block** headings, so a row says only which
+kind it is. Hover tips and the reclassification panel name them in full, since a category on its own
+needs to say which half it belongs to.
 
 Damage and block are each split into what arrives now and what grows over a fight, because those are
 different problems: a deck that cannot kill an elite before turn five and a deck that stops scaling
@@ -21,8 +25,9 @@ The panel shows throughout a run and updates as your deck changes. It gets out o
 menus that are not about the run in front of you: settings, the compendium and the pause menu. **Insert** hides and
 shows it, and you can drag it anywhere; both are remembered. To use a different key, click the
 hotkey button on the panel and press the one you want. A card can count toward several categories.
-Upgrades do not change a card's categories. Curses and statuses are counted separately and never
-contribute to a category.
+Upgrades do not change a card's categories. Curses and statuses never contribute to a category. They are not given a row of their own either — you
+already know you took the curse. They do count toward the deck total, so they drag every percentage
+down, which is the part worth seeing.
 
 **Hovering any card** adds a Spire Sense line to its tooltip naming the categories it counts for, and
 says when a classification was guessed rather than curated.

@@ -98,20 +98,30 @@ public static class OverlayText
     {
         sb.Append("[table=3]");
 
+        string? openGroup = null;
         foreach (var category in CategoryInfo.All)
         {
+            var group = CategoryInfo.Group(category);
+            if (group != openGroup)
+            {
+                if (group != null)
+                {
+                    AppendGroupHeading(sb, group);
+                }
+                openGroup = group;
+            }
+
             var guessed = a.GuessedCounts[category];
             var figure = $"{a.PercentFor(category)}% ({a.Counts[category]})";
 
-            AppendRow(sb, CategoryInfo.DisplayName(category), figure,
-                guessed > 0 ? $" [color={Dim}]({guessed} guessed)[/color]" : null);
-        }
+            // Inside a group the heading already says "Damage" or "Block", so the row says only
+            // which kind. A category with no group keeps its full name and sits flush left.
+            var label = group == null
+                ? CategoryInfo.DisplayName(category)
+                : Indent + CategoryInfo.ShortName(category);
 
-        // Also a fact about what the deck contains, so it belongs with the counts rather than down
-        // with the estimates. Dimmed, because unlike the rows above it is not a category.
-        if (a.IgnoredCards > 0)
-        {
-            AppendRow(sb, "Curses / Status", $"{a.PercentOfDeck(a.IgnoredCards)}% ({a.IgnoredCards})", dim: true);
+            AppendRow(sb, label, figure,
+                guessed > 0 ? $" [color={Dim}]({guessed} guessed)[/color]" : null);
         }
 
         sb.Append("[/table]");
@@ -140,6 +150,16 @@ public static class OverlayText
         AppendRow(sb, "Mitigation:", CycleFigures.Format(cycle.Mitigation));
         AppendRow(sb, "Draw:", CycleFigures.FormatDraw(cycle.CardsDrawn));
         sb.Append("[/table]");
+    }
+
+    /// <summary>
+    /// A label-only row opening a group. It stays inside the same table as the rows under it, which
+    /// is what keeps every figure in one column: a heading in its own table would let the two
+    /// tables size their columns independently and the numbers would stop lining up.
+    /// </summary>
+    private static void AppendGroupHeading(StringBuilder sb, string heading)
+    {
+        sb.Append($"[cell][b]{Escape(heading)}[/b][/cell][cell]{ColumnGap}[/cell][cell]{FigurePad}[/cell]");
     }
 
     private static void AppendRow(StringBuilder sb, string label, string figure, string? suffix = null, bool dim = false)

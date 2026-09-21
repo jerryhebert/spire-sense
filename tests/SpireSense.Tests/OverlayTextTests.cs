@@ -15,7 +15,7 @@ public class OverlayTextTests
     }
 
     [Fact]
-    public void ShowsEveryJobRowAndTheDeckSize()
+    public void ShowsEveryCategoryRowAndTheDeckSize()
     {
         var text = Render(new[] { CardFacts.Named("StrikeIronclad", CardKind.Attack) });
 
@@ -23,7 +23,10 @@ public class OverlayTextTests
         Assert.Contains("1 cards", text);
         foreach (var category in CategoryInfo.All)
         {
-            Assert.Contains(CategoryInfo.DisplayName(category).Trim(), text);
+            // Grouped categories appear under their heading by the short half of their name, so
+            // between the heading and the row the full name is on screen either way.
+            Assert.Contains(CategoryInfo.ShortName(category), text);
+            Assert.Contains(CategoryInfo.Group(category) ?? CategoryInfo.ShortName(category), text);
         }
     }
 
@@ -39,31 +42,52 @@ public class OverlayTextTests
     }
 
     [Fact]
-    public void MentionsCursesOnlyWhenTheDeckHasSome()
+    public void CursesAreNotGivenARowOfTheirOwn()
     {
-        var clean = Render(new[] { CardFacts.Named("StrikeIronclad", CardKind.Attack) });
+        // A curse count is not something you act on: you already know you took the curse, and it
+        // is a row of panel height spent saying so. Curses still count toward the deck total, so
+        // they still drag every percentage down, which is the part that matters.
         var cursed = Render(new[] { CardFacts.Named("StrikeIronclad", CardKind.Attack), TestData.Curse("Regret") });
 
-        Assert.DoesNotContain("Curses / Status", clean);
-        Assert.Contains("Curses / Status", cursed);
+        Assert.DoesNotContain("Curses", cursed);
         Assert.Contains("50% (1)", cursed);
     }
 
     [Fact]
-    public void CursesAreCountedWithTheDeckNotWithTheEstimates()
+    public void CategoriesAreGroupedUnderDamageAndBlock()
     {
-        // They describe what the deck contains, so they belong above the divider with the category
-        // counts rather than below it with what the deck does.
-        var text = Render(new[] { CardFacts.Named("StrikeIronclad", CardKind.Attack), TestData.Curse("Regret") });
+        // Seven identical rows read as one flat list of unrelated facts. The two headings say what
+        // the rows underneath have in common, and let those rows drop the repeated half of their
+        // name: "Frontloaded" under "Damage" rather than "FL. Damage" seven rows running.
+        var text = Render(new[] { CardFacts.Named("StrikeIronclad", CardKind.Attack) });
 
-        var cursesAt = text.IndexOf("Curses / Status", StringComparison.Ordinal);
-        // The last rule is the one between the counts and the estimates; an earlier one sets the
-        // power score apart at the top of the panel.
-        var dividerAt = text.LastIndexOf('─');
-        var estimatesAt = text.IndexOf("Per turn", StringComparison.Ordinal);
+        var damageAt = text.IndexOf("Damage", StringComparison.Ordinal);
+        var blockAt = text.IndexOf("Block", StringComparison.Ordinal);
+        var accelerationAt = text.IndexOf("Acceleration", StringComparison.Ordinal);
 
-        Assert.InRange(cursesAt, 0, dividerAt);
-        Assert.InRange(dividerAt, 0, estimatesAt);
+        Assert.InRange(damageAt, 0, blockAt);
+        Assert.InRange(blockAt, 0, accelerationAt);
+
+        // Two "Frontloaded" and two "Scaling" rows, one under each heading.
+        Assert.Equal(2, CountOf(text, "Frontloaded"));
+        Assert.Equal(2, CountOf(text, "Scaling"));
+        Assert.Equal(1, CountOf(text, "AOE"));
+
+        // The grouped rows are indented under their heading, and Acceleration is not, because it
+        // has no heading to sit under.
+        Assert.Contains("\u00A0Frontloaded", text);
+        Assert.DoesNotContain("\u00A0Acceleration", text);
+    }
+
+    private static int CountOf(string haystack, string needle)
+    {
+        var count = 0;
+        for (var i = haystack.IndexOf(needle, StringComparison.Ordinal); i >= 0;
+             i = haystack.IndexOf(needle, i + 1, StringComparison.Ordinal))
+        {
+            count++;
+        }
+        return count;
     }
 
     [Fact]
@@ -102,7 +126,7 @@ public class OverlayTextTests
 
         var powerAt = text.IndexOf("Power", StringComparison.Ordinal);
         var firstDividerAt = text.IndexOf('─');
-        var firstCountAt = text.IndexOf("FL. Damage", StringComparison.Ordinal);
+        var firstCountAt = text.IndexOf("Frontloaded", StringComparison.Ordinal);
 
         Assert.InRange(powerAt, 0, firstDividerAt);
         Assert.InRange(firstDividerAt, 0, firstCountAt);
