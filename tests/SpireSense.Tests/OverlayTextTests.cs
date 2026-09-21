@@ -86,6 +86,11 @@ public class OverlayTextTests
         Assert.NotEmpty(figures);
         Assert.Contains(figures, f => f.Contains('%'));
         Assert.All(figures.Where(f => f.Contains('%')), f => Assert.Equal(figures.First(x => x.Contains('%')).Length, f.Length));
+
+        // The padding is no-break spaces. RichTextLabel does not treat leading ordinary spaces in a
+        // cell as significant, so padding with them put single-digit rows a character left of the
+        // rest — which is exactly the misalignment this is meant to prevent.
+        Assert.All(figures, f => Assert.DoesNotContain(' ', f.TakeWhile(char.IsWhiteSpace)));
     }
 
     [Fact]

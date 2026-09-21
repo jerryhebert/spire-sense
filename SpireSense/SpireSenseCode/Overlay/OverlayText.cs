@@ -28,6 +28,14 @@ public static class OverlayText
     /// </summary>
     private const int FigureWidth = 9;
 
+    /// <summary>
+    /// What figures are padded with. A no-break space, not an ordinary one: RichTextLabel does not
+    /// treat leading ordinary spaces in a cell as significant, so a row padded with three of them
+    /// lost more width than a row padded with two, and single-digit rows sat a character left of
+    /// the rest. U+00A0 survives that, and is the same advance width in a monospaced font.
+    /// </summary>
+    private const char FigurePad = ' ';
+
     public static string Build(DeckAnalysis a, bool showCardNames, CycleFigures cycle, DeckPowerResult power)
     {
         var sb = new StringBuilder();
@@ -125,7 +133,7 @@ public static class OverlayText
 
     private static void AppendRow(StringBuilder sb, string label, string figure, string? suffix = null, bool dim = false)
     {
-        var value = Mono(figure.PadLeft(FigureWidth));
+        var value = Mono(figure.PadLeft(FigureWidth, FigurePad));
 
         sb.Append("[cell]");
         sb.Append(dim ? $"[color={Dim}]{Escape(label)}[/color]" : Escape(label));
