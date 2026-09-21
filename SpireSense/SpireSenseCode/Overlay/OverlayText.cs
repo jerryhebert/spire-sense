@@ -130,7 +130,8 @@ public static class OverlayText
                 : Indent + CategoryInfo.ShortName(category);
 
             AppendRow(sb, label, figure,
-                guessed > 0 ? $" [color={Dim}]({guessed} guessed)[/color]" : null);
+                guessed > 0 ? $" [color={Dim}]({guessed} guessed)[/color]" : null,
+                boldLabel: group == null);
         }
 
         sb.Append("[/table]");
@@ -171,16 +172,21 @@ public static class OverlayText
         sb.Append($"[cell][b]{Escape(heading)}[/b][/cell][cell]{ColumnGap}[/cell][cell]{FigurePad}[/cell]");
     }
 
-    private static void AppendRow(StringBuilder sb, string label, string figure, string? suffix = null, bool dim = false)
+    /// <summary>
+    /// One row of a table. <paramref name="boldLabel"/> is for a row at heading level: a category
+    /// with no group is a peer of Damage and Block, not one of the things filed under them, and it
+    /// has to read that way.
+    /// </summary>
+    private static void AppendRow(StringBuilder sb, string label, string figure, string? suffix = null, bool boldLabel = false)
     {
         var value = Mono(figure.PadLeft(FigureWidth, FigurePad));
 
         sb.Append("[cell]");
-        sb.Append(dim ? $"[color={Dim}]{Escape(label)}[/color]" : Escape(label));
+        sb.Append(boldLabel ? $"[b]{Escape(label)}[/b]" : Escape(label));
         sb.Append("[/cell][cell]");
         sb.Append(ColumnGap);
         sb.Append("[/cell][cell]");
-        sb.Append(dim ? $"[color={Dim}]{value}[/color]" : $"[b]{value}[/b]");
+        sb.Append($"[b]{value}[/b]");
         if (suffix != null)
         {
             sb.Append(suffix);
