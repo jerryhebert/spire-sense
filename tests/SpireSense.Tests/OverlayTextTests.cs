@@ -11,7 +11,7 @@ public class OverlayTextTests
     private static string Render(IEnumerable<CardFacts> deck, bool showCardNames = true)
     {
         var analysis = DeckAnalysis.Analyze(deck);
-        return OverlayText.Build(analysis, showCardNames, CycleFigures.From(analysis, new RunStats()), default).ToString();
+        return OverlayText.Build(analysis, showCardNames, CycleFigures.From(analysis, new RunStats()), default, default, new RunStats()).ToString();
     }
 
     [Fact]
@@ -35,7 +35,7 @@ public class OverlayTextTests
     {
         // The rebind button under the counts shows the current key, so the header must not
         // duplicate it and go stale after a rebind.
-        var text = OverlayText.Build(DeckAnalysis.Empty, showCardNames: true, CycleFigures.From(DeckAnalysis.Empty, new RunStats()), default).ToString();
+        var text = OverlayText.Build(DeckAnalysis.Empty, showCardNames: true, CycleFigures.From(DeckAnalysis.Empty, new RunStats()), default, default, new RunStats()).ToString();
 
         Assert.Contains("0 cards", text);
         Assert.DoesNotContain("hides", text);
@@ -133,21 +133,55 @@ public class OverlayTextTests
     }
 
     [Fact]
-    public void ThePowerScoreIsSetApartFromTheCountsBelowIt()
+    public void TheFourPartsOfThePanelComeBackSeparately()
     {
-        // It is a verdict on the whole deck rather than one more fact about it, and run straight
-        // into the counts it read as just another row. The parts are handed back separately so the
-        // overlay can put a real separator node between them, rather than a row of box characters
-        // that would set the panel's width.
+        // They are handed back in pieces so the overlay can put a real separator node between them,
+        // rather than a row of box characters that would set the panel's width.
         var analysis = DeckAnalysis.Analyze(new[] { CardFacts.Named("StrikeIronclad", CardKind.Attack) });
+        var stats = Fought(FightKind.Elite, 24);
 
-        var text = OverlayText.Build(analysis, true, CycleFigures.From(analysis, new RunStats()),
-            new DeckPowerResult(6.2, "Block", HasData: true));
+        var text = OverlayText.Build(analysis, true, CycleFigures.From(analysis, stats),
+            Attrition.Forecast(stats, 58), default, stats);
 
-        Assert.Contains("Power", text.Summary);
-        Assert.DoesNotContain("Power", text.Counts);
+        Assert.Contains("Elites cost", text.Summary);
+        Assert.DoesNotContain("Elites cost", text.Counts);
         Assert.Contains("Frontloaded", text.Counts);
         Assert.Contains("Per turn", text.PerTurn);
+        Assert.Contains("HP per fight", text.PerFight);
+    }
+
+    [Fact]
+    public void TheForecastSaysWhatTheFightCostsAndWhatYouHaveLeft()
+    {
+        // This replaced a 0-10 score whose weights, cap and floor were all invented and never
+        // checked against anything. It has units, and you can act on it without knowing how it was
+        // computed: it is the number that decides whether you take the elite.
+        var analysis = DeckAnalysis.Analyze(new[] { CardFacts.Named("StrikeIronclad", CardKind.Attack) });
+        var stats = Fought(FightKind.Elite, 24);
+
+        var text = OverlayText.Build(analysis, true, CycleFigures.From(analysis, stats),
+            Attrition.Forecast(stats, 58), default, stats).ToString();
+
+        Assert.Contains("Elites cost", text);
+        Assert.Contains("24", text);
+        Assert.Contains("you have", text);
+        Assert.Contains("58", text);
+        Assert.DoesNotContain("Power", text);
+        Assert.DoesNotContain("/ 10", text);
+    }
+
+    [Fact]
+    public void ThereIsNoForecastUntilAFightHasBeenSeen()
+    {
+        Assert.Contains("Measuring", Render(new[] { CardFacts.Named("StrikeIronclad", CardKind.Attack) }));
+    }
+
+    private static RunStats Fought(FightKind kind, double hpLost)
+    {
+        var stats = new RunStats();
+        stats.NoteFight(kind.ToString(), kind);
+        stats.AddHpLost(hpLost);
+        return stats;
     }
 
     [Fact]
@@ -163,21 +197,36 @@ public class OverlayTextTests
     }
 
     [Fact]
-    public void WhatIsHoldingTheScoreBackSitsOnItsOwnLine()
+    public void TheWeakestAreaHangsUnderTheForecastOnItsOwnLine()
     {
-        // The panel is only as wide as its widest line, so this one sharing a line with the score
-        // set a floor on the whole panel that no amount of dragging the resize grip could get past.
+        // The panel is only as wide as its widest line, so this sharing the forecast's line set a
+        // floor on the whole panel that no amount of dragging the resize grip could get past.
         var analysis = DeckAnalysis.Analyze(new[] { CardFacts.Named("StrikeIronclad", CardKind.Attack) });
-        var power = new DeckPowerResult(6.2, "Acceleration", HasData: true);
+        var stats = Fought(FightKind.Elite, 24);
+        var advice = new DeckAdviceResult("Acceleration", 0.3, HasData: true);
 
-        var text = OverlayText.Build(analysis, true, CycleFigures.From(analysis, new RunStats()), power).ToString();
+        var text = OverlayText.Build(analysis, true, CycleFigures.From(analysis, stats),
+            Attrition.Forecast(stats, 58), advice, stats).ToString();
         var lines = text.Split('\n');
 
-        var scoreLine = Assert.Single(lines, l => l.Contains("Power "));
-        Assert.DoesNotContain("held back by", scoreLine);
+        var forecastLine = Assert.Single(lines, l => l.Contains("Elites cost"));
+        Assert.DoesNotContain("weakest", forecastLine);
 
-        var reasonLine = Assert.Single(lines, l => l.Contains("held back by"));
-        Assert.StartsWith(" ", reasonLine);
+        var weakestLine = Assert.Single(lines, l => l.Contains("weakest"));
+        Assert.StartsWith(" ", weakestLine);
+        Assert.Contains("Acceleration", weakestLine);
+    }
+
+    [Fact]
+    public void ADeckWithNoWeakAreaIsNotToldItHasOne()
+    {
+        var analysis = DeckAnalysis.Analyze(new[] { CardFacts.Named("StrikeIronclad", CardKind.Attack) });
+        var adequate = new DeckAdviceResult("Damage", 1.2, HasData: true);
+
+        var text = OverlayText.Build(analysis, true, CycleFigures.From(analysis, new RunStats()),
+            default, adequate, new RunStats()).ToString();
+
+        Assert.DoesNotContain("weakest", text);
     }
 
     [Fact]
