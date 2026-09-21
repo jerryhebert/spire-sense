@@ -11,7 +11,7 @@ public class OverlayTextTests
     private static string Render(IEnumerable<CardFacts> deck, bool showCardNames = true)
     {
         var analysis = DeckAnalysis.Analyze(deck);
-        return OverlayText.Build(analysis, showCardNames, CycleFigures.From(analysis, new RunStats()), default);
+        return OverlayText.Build(analysis, showCardNames, CycleFigures.From(analysis, new RunStats()), default).ToString();
     }
 
     [Fact]
@@ -35,7 +35,7 @@ public class OverlayTextTests
     {
         // The rebind button under the counts shows the current key, so the header must not
         // duplicate it and go stale after a rebind.
-        var text = OverlayText.Build(DeckAnalysis.Empty, showCardNames: true, CycleFigures.From(DeckAnalysis.Empty, new RunStats()), default);
+        var text = OverlayText.Build(DeckAnalysis.Empty, showCardNames: true, CycleFigures.From(DeckAnalysis.Empty, new RunStats()), default).ToString();
 
         Assert.Contains("0 cards", text);
         Assert.DoesNotContain("hides", text);
@@ -121,15 +121,30 @@ public class OverlayTextTests
     public void ThePowerScoreIsSetApartFromTheCountsBelowIt()
     {
         // It is a verdict on the whole deck rather than one more fact about it, and run straight
-        // into the counts it read as just another row.
+        // into the counts it read as just another row. The parts are handed back separately so the
+        // overlay can put a real separator node between them, rather than a row of box characters
+        // that would set the panel's width.
+        var analysis = DeckAnalysis.Analyze(new[] { CardFacts.Named("StrikeIronclad", CardKind.Attack) });
+
+        var text = OverlayText.Build(analysis, true, CycleFigures.From(analysis, new RunStats()),
+            new DeckPowerResult(6.2, "Block", HasData: true));
+
+        Assert.Contains("Power", text.Summary);
+        Assert.DoesNotContain("Power", text.Counts);
+        Assert.Contains("Frontloaded", text.Counts);
+        Assert.Contains("Per turn", text.PerTurn);
+    }
+
+    [Fact]
+    public void NoPartOfThePanelDrawsARuleOutOfCharacters()
+    {
+        // A run of box characters is a line of text like any other, so it set the panel's width
+        // and left dead space to the right of every figure — and the resize grip could not reach
+        // it, because the text scaled along with the panel. The rules are separator nodes now.
         var text = Render(new[] { CardFacts.Named("StrikeIronclad", CardKind.Attack) });
 
-        var powerAt = text.IndexOf("Power", StringComparison.Ordinal);
-        var firstDividerAt = text.IndexOf('─');
-        var firstCountAt = text.IndexOf("Frontloaded", StringComparison.Ordinal);
-
-        Assert.InRange(powerAt, 0, firstDividerAt);
-        Assert.InRange(firstDividerAt, 0, firstCountAt);
+        Assert.DoesNotContain('─', text);
+        Assert.DoesNotContain('_', text);
     }
 
     [Fact]
@@ -140,7 +155,7 @@ public class OverlayTextTests
         var analysis = DeckAnalysis.Analyze(new[] { CardFacts.Named("StrikeIronclad", CardKind.Attack) });
         var power = new DeckPowerResult(6.2, "Acceleration", HasData: true);
 
-        var text = OverlayText.Build(analysis, true, CycleFigures.From(analysis, new RunStats()), power);
+        var text = OverlayText.Build(analysis, true, CycleFigures.From(analysis, new RunStats()), power).ToString();
         var lines = text.Split('\n');
 
         var scoreLine = Assert.Single(lines, l => l.Contains("Power "));

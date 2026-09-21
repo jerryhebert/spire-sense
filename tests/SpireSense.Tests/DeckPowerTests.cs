@@ -109,7 +109,7 @@ public class DeckPowerTests
         var analysis = DeckAnalysis.Analyze(Array.Empty<CardFacts>());
         var power = new DeckPowerResult(6.2, "Block", HasData: true);
 
-        var text = OverlayText.Build(analysis, true, new CycleFigures(10, 5, 3, 5.0, Measured: true), power);
+        var text = OverlayText.Build(analysis, true, new CycleFigures(10, 5, 3, 5.0, Measured: true), power).ToString();
 
         // The figure is wrapped in a font tag, so the label and the number are matched separately.
         Assert.Contains("Power ", text);
@@ -153,7 +153,7 @@ public class DeckPowerTests
     {
         var analysis = DeckAnalysis.Analyze(Array.Empty<CardFacts>());
 
-        var text = OverlayText.Build(analysis, true, new CycleFigures(0, 0, 0, 5.0, Measured: false), default);
+        var text = OverlayText.Build(analysis, true, new CycleFigures(0, 0, 0, 5.0, Measured: false), default).ToString();
 
         Assert.Contains("measuring", text);
         Assert.DoesNotContain("Power 0", text);

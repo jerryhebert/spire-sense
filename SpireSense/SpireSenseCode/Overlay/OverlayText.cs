@@ -3,13 +3,24 @@ using SpireSense.SpireSenseCode.Categories;
 
 namespace SpireSense.SpireSenseCode.Overlay;
 
-/// <summary>Formats a <see cref="DeckAnalysis"/> as BBCode for the overlay's RichTextLabel.</summary>
+/// <summary>
+/// The panel's text, cut at the rules that separate its parts. The overlay puts each part in its
+/// own label with a real separator node between, rather than drawing a rule out of box characters:
+/// a run of them is a line of text like any other, so it set the panel's width and left dead space
+/// to the right of every figure.
+/// </summary>
+public readonly record struct PanelText(string Summary, string Counts, string PerTurn)
+{
+    /// <summary>The parts run together, for tests and for logging.</summary>
+    public override string ToString() => $"{Summary}\n{Counts}\n{PerTurn}";
+}
+
+/// <summary>Formats a <see cref="DeckAnalysis"/> as BBCode for the overlay's RichTextLabels.</summary>
 public static class OverlayText
 {
     private const string Gold = "#e0c070";
     private const string Dim = "#9a9a9a";
     private const string Warn = "#e08a5a";
-    private const string Divider = "#5a5a5a";
     private const string Good = "#8fbf6f";
 
     /// <summary>How many card names are listed before the rest are elided.</summary>
@@ -17,9 +28,6 @@ public static class OverlayText
 
     /// <summary>Contents of the spacer column. A table column with nothing in it collapses to nothing.</summary>
     private const string ColumnGap = "    ";
-
-    private const char DividerChar = '─';
-    private const int DividerWidth = 34;
 
     /// <summary>
     /// Width every figure is padded to. In the proportional UI font "9% (3)" and "18% (12)" are
@@ -34,27 +42,28 @@ public static class OverlayText
     /// lost more width than a row padded with two, and single-digit rows sat a character left of
     /// the rest. U+00A0 survives that, and is the same advance width in a monospaced font.
     /// </summary>
-    private const char FigurePad = ' ';
+    private const char FigurePad = '\u00A0';
 
     /// <summary>
     /// Indent for a line hanging under the one above it. No-break spaces for the same reason the
     /// figures use them: ordinary leading spaces do not survive into layout.
     /// </summary>
-    private const string Indent = "  ";
+    private const string Indent = "\u00A0\u00A0";
 
-    public static string Build(DeckAnalysis a, bool showCardNames, CycleFigures cycle, DeckPowerResult power)
+    public static PanelText Build(DeckAnalysis a, bool showCardNames, CycleFigures cycle, DeckPowerResult power)
     {
-        var sb = new StringBuilder();
-        sb.Append($"[b][color={Gold}]Spire Sense[/color][/b]  [color={Dim}]{a.TotalCards} cards[/color]\n");
+        var summary = new StringBuilder();
+        summary.Append($"[b][color={Gold}]Spire Sense[/color][/b]  [color={Dim}]{a.TotalCards} cards[/color]\n");
+        AppendPower(summary, power);
 
-        AppendPower(sb, power);
-        AppendDivider(sb, leadingBlankLine: false);
-        AppendCategoryCounts(sb, a);
-        AppendDivider(sb);
-        AppendCycle(sb, cycle);
-        AppendFootnotes(sb, a, showCardNames);
+        var counts = new StringBuilder();
+        AppendCategoryCounts(counts, a);
 
-        return sb.ToString();
+        var perTurn = new StringBuilder();
+        AppendCycle(perTurn, cycle);
+        AppendFootnotes(perTurn, a, showCardNames);
+
+        return new PanelText(summary.ToString().TrimEnd('\n'), counts.ToString(), perTurn.ToString());
     }
 
     /// <summary>
@@ -184,19 +193,6 @@ public static class OverlayText
     /// so the tag is doing the work of a font switch here and carries none of its usual meaning.
     /// </summary>
     private static string Mono(string text) => $"[code]{Escape(text)}[/code]";
-
-    /// <summary>A rule separating one part of the panel from the next.</summary>
-    private static void AppendDivider(StringBuilder sb, bool leadingBlankLine = true)
-    {
-        if (leadingBlankLine)
-        {
-            sb.Append('\n');
-        }
-
-        sb.Append($"[color={Divider}]");
-        sb.Append(new string(DividerChar, DividerWidth));
-        sb.Append("[/color]\n");
-    }
 
     /// <summary>
     /// Cards with no category are deliberately not reported. Every card in the game is curated, so
