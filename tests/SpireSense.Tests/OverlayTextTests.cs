@@ -109,6 +109,24 @@ public class OverlayTextTests
     }
 
     [Fact]
+    public void WhatIsHoldingTheScoreBackSitsOnItsOwnLine()
+    {
+        // The panel is only as wide as its widest line, so this one sharing a line with the score
+        // set a floor on the whole panel that no amount of dragging the resize grip could get past.
+        var analysis = DeckAnalysis.Analyze(new[] { CardFacts.Named("StrikeIronclad", CardKind.Attack) });
+        var power = new DeckPowerResult(6.2, "Acceleration", HasData: true);
+
+        var text = OverlayText.Build(analysis, true, CycleFigures.From(analysis, new RunStats()), power);
+        var lines = text.Split('\n');
+
+        var scoreLine = Assert.Single(lines, l => l.Contains("Power "));
+        Assert.DoesNotContain("held back by", scoreLine);
+
+        var reasonLine = Assert.Single(lines, l => l.Contains("held back by"));
+        Assert.StartsWith(" ", reasonLine);
+    }
+
+    [Fact]
     public void CardsWithNoCategoryAreNotReportedOnThePanel()
     {
         // Every card in the game is curated, so the only ones with no category are the handful that

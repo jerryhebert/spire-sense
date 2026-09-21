@@ -101,7 +101,9 @@ public partial class SpireSenseOverlay : CanvasLayer
             ScrollActive = false,
             AutowrapMode = TextServer.AutowrapMode.Off,
             MouseFilter = Control.MouseFilterEnum.Ignore,
-            CustomMinimumSize = new Vector2(280, 0),
+            // No minimum width. It used to be 280px, which the panel could never shrink below
+            // however far you dragged the grip, and it left dead space to the right of every
+            // figure because the table stretches to whatever width the label is given.
         };
         _label.AddThemeFontSizeOverride("normal_font_size", _settings.FontSize);
         _label.AddThemeFontSizeOverride("bold_font_size", _settings.FontSize);
@@ -205,7 +207,9 @@ public partial class SpireSenseOverlay : CanvasLayer
 
     private void UpdateHotkeyButton()
     {
-        _hotkeyButton.Text = $"Hide with: {_settings.ToggleKeyLabel}  (click to change)";
+        // Kept short deliberately. The panel is as wide as its widest child, and this button was
+        // one of the two things holding it open.
+        _hotkeyButton.Text = $"Hide: {_settings.ToggleKeyLabel} · click to rebind";
     }
 
     public override void _ExitTree()
