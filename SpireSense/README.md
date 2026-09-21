@@ -84,8 +84,13 @@ the row it names, not as a verdict.
   or rebind): `visible`, `x`, `y`, `font_size`, `scale`, `editor_x`, `editor_y`, `toggle_key` (any
   Godot `Key` name), `show_card_names`, `show_card_tips`. Delete the file to reset everything, which
   is the way out if you ever hide the panel and bind the hotkey to something another mod has taken.
-- Below a divider, a **Per turn** section: damage dealt, block gained and cards drawn in an average
+- Below a rule, a **Per turn** section: damage dealt, block gained and cards drawn in an average
   turn.
+  - The rules between sections are real separator nodes, and the panel is built from three labels
+    rather than one. A rule drawn out of box characters is a line of text like any other: it was
+    the longest line on the panel, so it fixed the width, every figure sat in a column stretched
+    to match, and no amount of dragging the resize grip could reach it because the text scaled
+    along with the panel.
   - Draw counts every card you see, turn-start hands and draw effects alike, so it shows whether a
     draw engine is actually working. The opening hand size alone would not.
   - Measured from the run so far, and refined with every turn you play, so it gets steadier as the

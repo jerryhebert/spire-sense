@@ -16,7 +16,9 @@ public partial class SpireSenseOverlay : CanvasLayer
 
     private OverlaySettings _settings = new();
     private PanelContainer _panel = null!;
-    private RichTextLabel _label = null!;
+    private RichTextLabel _summaryLabel = null!;
+    private RichTextLabel _countsLabel = null!;
+    private RichTextLabel _perTurnLabel = null!;
     private Button _hotkeyButton = null!;
     private bool _capturingHotkey;
     private double _pollAccumulator;
@@ -93,21 +95,9 @@ public partial class SpireSenseOverlay : CanvasLayer
         _panel.AddThemeStyleboxOverride("panel", style);
         _panel.GuiInput += OnPanelGuiInput;
 
-        _label = new RichTextLabel
-        {
-            Name = "Text",
-            BbcodeEnabled = true,
-            FitContent = true,
-            ScrollActive = false,
-            AutowrapMode = TextServer.AutowrapMode.Off,
-            MouseFilter = Control.MouseFilterEnum.Ignore,
-            // No minimum width. It used to be 280px, which the panel could never shrink below
-            // however far you dragged the grip, and it left dead space to the right of every
-            // figure because the table stretches to whatever width the label is given.
-        };
-        _label.AddThemeFontSizeOverride("normal_font_size", _settings.FontSize);
-        _label.AddThemeFontSizeOverride("bold_font_size", _settings.FontSize);
-        ApplyMonoFont(_label, _settings.FontSize);
+        _summaryLabel = CreateTextLabel("Summary");
+        _countsLabel = CreateTextLabel("Counts");
+        _perTurnLabel = CreateTextLabel("PerTurn");
 
         _hotkeyButton = new Button
         {
@@ -121,7 +111,11 @@ public partial class SpireSenseOverlay : CanvasLayer
 
         var column = new VBoxContainer { Name = "Column", MouseFilter = Control.MouseFilterEnum.Ignore };
         column.AddThemeConstantOverride("separation", 6);
-        column.AddChild(_label);
+        column.AddChild(_summaryLabel);
+        column.AddChild(CreateRule());
+        column.AddChild(_countsLabel);
+        column.AddChild(CreateRule());
+        column.AddChild(_perTurnLabel);
         column.AddChild(_hotkeyButton);
 
         _panel.AddChild(GripLayer.Wrap(column, ResizeGrip.For(_panel, _settings)));
@@ -133,6 +127,46 @@ public partial class SpireSenseOverlay : CanvasLayer
         Visible = _settings.Visible;
         _panel.Visible = false; // Stays hidden until combat is on screen.
         ModLog.Info($"Overlay installed (visible={_settings.Visible}, toggle={_settings.ParsedToggleKey}).");
+    }
+
+    /// <summary>
+    /// One of the panel's three text blocks. No minimum width, and no wrapping: each block is
+    /// exactly as wide as its own longest line, and the panel is as wide as the widest of them.
+    /// </summary>
+    private RichTextLabel CreateTextLabel(string name)
+    {
+        var label = new RichTextLabel
+        {
+            Name = name,
+            BbcodeEnabled = true,
+            FitContent = true,
+            ScrollActive = false,
+            AutowrapMode = TextServer.AutowrapMode.Off,
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+        };
+        label.AddThemeFontSizeOverride("normal_font_size", _settings.FontSize);
+        label.AddThemeFontSizeOverride("bold_font_size", _settings.FontSize);
+        ApplyMonoFont(label, _settings.FontSize);
+        return label;
+    }
+
+    /// <summary>
+    /// A rule between two blocks. A real separator node, which stretches to whatever width the
+    /// panel settles on. The rule used to be a run of 34 box-drawing characters inside the text,
+    /// and a run of characters is a line like any other: it was the longest line on the panel, so
+    /// it set the width, and every figure sat in a column stretched to match it. Nothing the
+    /// resize grip could do reached it, because the text scaled along with everything else.
+    /// </summary>
+    private static HSeparator CreateRule()
+    {
+        var rule = new HSeparator { Name = "Rule", MouseFilter = Control.MouseFilterEnum.Ignore };
+        rule.AddThemeStyleboxOverride("separator", new StyleBoxLine
+        {
+            Color = new Color(0.35f, 0.35f, 0.35f, 1f),
+            Thickness = 1,
+        });
+        rule.AddThemeConstantOverride("separation", 10);
+        return rule;
     }
 
     /// <summary>
@@ -268,7 +302,10 @@ public partial class SpireSenseOverlay : CanvasLayer
                 _lastAnalysis = analysis;
                 _lastCycle = cycle;
                 _lastPower = power;
-                _label.Text = OverlayText.Build(analysis, _settings.ShowCardNames, cycle, power);
+                var text = OverlayText.Build(analysis, _settings.ShowCardNames, cycle, power);
+                _summaryLabel.Text = text.Summary;
+                _countsLabel.Text = text.Counts;
+                _perTurnLabel.Text = text.PerTurn;
             }
         }
         catch (Exception ex)
