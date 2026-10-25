@@ -1,6 +1,10 @@
+using System.Reflection;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.Entities.Players;
+using MegaCrit.Sts2.Core.Localization.DynamicVars;
 using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.Models.Orbs;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 using SpireSense.SpireSenseCode.Categories;
 
@@ -41,6 +45,11 @@ public static class CombatForecast
             var attacks = Attacks(hand.Cards, creature, enemies[0]);
             var energy = me.PlayerCombatState.Energy;
             var damage = BestHand.Damage(attacks, energy, out var played);
+
+            // Damage that lands whether or not you play anything: orbs firing, and relics and
+            // powers that go off on a turn boundary. On a Defect this is most of the output, and
+            // leaving it out made the figure badly wrong.
+            damage += Automatic(me, creature);
 
             return new TurnForecast(
                 HasCombat: true,
@@ -135,6 +144,123 @@ public static class CombatForecast
         }
 
         return attacks;
+    }
+
+    /// <summary>
+    /// Damage that arrives this turn without you playing a card: orbs, and the relics and powers
+    /// that fire on a turn boundary.
+    /// </summary>
+    private static int Automatic(Player me, Creature mine)
+    {
+        var total = 0;
+
+        try
+        {
+            total += OrbDamage(me);
+        }
+        catch (Exception ex)
+        {
+            ModLog.Warn($"Could not read orb damage: {ex.Message}");
+        }
+
+        try
+        {
+            total += PerTurnDamage(me.Relics, r => r.DynamicVars, "relic");
+            total += PerTurnDamage(mine.Powers, p => p.DynamicVars, "power");
+        }
+        catch (Exception ex)
+        {
+            ModLog.Warn($"Could not read per-turn damage: {ex.Message}");
+        }
+
+        return total;
+    }
+
+    /// <summary>
+    /// What the channelled orbs will do on their own.
+    ///
+    /// PassiveVal is already run through the game's orb-value hook by each orb, so Focus is in it.
+    /// Only Lightning and Glass deal damage passively: Frost makes block, Plasma makes energy, and
+    /// Dark only grows until it is evoked, so none of those belong in a damage figure.
+    /// </summary>
+    private static int OrbDamage(Player me)
+    {
+        var orbs = me.PlayerCombatState?.OrbQueue?.Orbs;
+        if (orbs == null)
+        {
+            return 0;
+        }
+
+        var total = 0m;
+        foreach (var orb in orbs)
+        {
+            if (orb is LightningOrb or GlassOrb)
+            {
+                total += orb.PassiveVal;
+            }
+        }
+
+        return (int)Math.Round(total, MidpointRounding.AwayFromZero);
+    }
+
+    /// <summary>
+    /// Relics and powers that deal damage every turn by themselves.
+    ///
+    /// Found rather than listed. A model qualifies when it both carries a Damage value and takes
+    /// over one of the turn-boundary hooks, which together is what a thing that hits every turn
+    /// looks like. Checked against the decompiled game this picks out exactly the damaging ones -
+    /// Mercury Hourglass, Festive Popper, Royal Poison, Inferno, Crimson Mantle, Rolling Boulder -
+    /// and nothing else, and it keeps working when the game adds another one.
+    /// </summary>
+    private static int PerTurnDamage<T>(IEnumerable<T> models, Func<T, DynamicVarSet> varsOf, string kind)
+        where T : notnull
+    {
+        var total = 0m;
+
+        foreach (var model in models)
+        {
+            try
+            {
+                if (!FiresEachTurn(model.GetType()) || !varsOf(model).TryGetValue("Damage", out var damage))
+                {
+                    continue;
+                }
+
+                var value = damage.PreviewValue > 0 ? damage.PreviewValue : damage.BaseValue;
+                if (value > 0)
+                {
+                    total += value;
+                    ModLog.Info($"This turn: {model.GetType().Name} ({kind}) adds {value}.");
+                }
+            }
+            catch (Exception ex)
+            {
+                // One odd model must not hide the rest of the turn.
+                ModLog.Warn($"Could not read {model.GetType().Name}: {ex.Message}");
+            }
+        }
+
+        return (int)Math.Round(total, MidpointRounding.AwayFromZero);
+    }
+
+    /// <summary>The turn-boundary hooks, and whether a type takes any of them over itself.</summary>
+    private static readonly string[] TurnHooks =
+    {
+        "AfterPlayerTurnStart", "BeforePlayerTurnEnd", "AfterPlayerTurnEnd",
+    };
+
+    private static bool FiresEachTurn(Type type)
+    {
+        foreach (var hook in TurnHooks)
+        {
+            var method = type.GetMethod(hook, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            if (method != null && method.DeclaringType == type)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>
