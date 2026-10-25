@@ -17,6 +17,8 @@ public partial class SpireSenseOverlay : CanvasLayer
     private OverlaySettings _settings = new();
     private PanelContainer _panel = null!;
     private RichTextLabel _summaryLabel = null!;
+    private RichTextLabel _thisTurnLabel = null!;
+    private Control _thisTurnRule = null!;
     private RichTextLabel _countsLabel = null!;
     private RichTextLabel _perTurnLabel = null!;
     private Button _hotkeyButton = null!;
@@ -96,6 +98,7 @@ public partial class SpireSenseOverlay : CanvasLayer
         _panel.GuiInput += OnPanelGuiInput;
 
         _summaryLabel = CreateTextLabel("Summary");
+        _thisTurnLabel = CreateTextLabel("ThisTurn");
         _countsLabel = CreateTextLabel("Counts");
         _perTurnLabel = CreateTextLabel("PerTurn");
 
@@ -112,6 +115,9 @@ public partial class SpireSenseOverlay : CanvasLayer
         var column = new VBoxContainer { Name = "Column", MouseFilter = Control.MouseFilterEnum.Ignore };
         column.AddThemeConstantOverride("separation", 6);
         column.AddChild(_summaryLabel);
+        _thisTurnRule = CreateRule();
+        column.AddChild(_thisTurnRule);
+        column.AddChild(_thisTurnLabel);
         column.AddChild(CreateRule());
         column.AddChild(_countsLabel);
         column.AddChild(CreateRule());
@@ -294,6 +300,7 @@ public partial class SpireSenseOverlay : CanvasLayer
 
             var analysis = DeckAnalysis.Analyze(deck.Select(CardFactsReader.Read));
             var cycle = CycleFigures.From(analysis, RunStats.Current);
+            var forecast = CombatForecast.Read();
             var stats = RunStats.Current;
             var advice = DeckAdvice.Evaluate(ActTargets.BuildInputs(analysis, stats));
 
@@ -303,8 +310,15 @@ public partial class SpireSenseOverlay : CanvasLayer
                 _lastAnalysis = analysis;
                 _lastCycle = cycle;
                 _lastAdvice = advice;
-                var text = OverlayText.Build(analysis, _settings.ShowCardNames, cycle, advice);
+                var text = OverlayText.Build(analysis, _settings.ShowCardNames, cycle, advice, forecast);
                 _summaryLabel.Text = text.Summary;
+
+                // Outside a fight this section has nothing to say, and its rule would leave a bare
+                // line across the panel, so the two come and go together.
+                var inCombat = text.ThisTurn.Length > 0;
+                _thisTurnLabel.Text = text.ThisTurn;
+                _thisTurnLabel.Visible = inCombat;
+                _thisTurnRule.Visible = inCombat;
                 _countsLabel.Text = text.Counts;
                 _perTurnLabel.Text = text.PerTurn;
             }

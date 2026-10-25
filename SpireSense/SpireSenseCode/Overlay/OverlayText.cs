@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using SpireSense.SpireSenseCode.Categories;
 
@@ -9,7 +10,7 @@ namespace SpireSense.SpireSenseCode.Overlay;
 /// a run of them is a line of text like any other, so it set the panel's width and left dead space
 /// to the right of every figure.
 /// </summary>
-public readonly record struct PanelText(string Summary, string Counts, string PerTurn)
+public readonly record struct PanelText(string Summary, string ThisTurn, string Counts, string PerTurn)
 {
     /// <summary>The parts run together, for tests and for logging.</summary>
     public override string ToString() => $"{Summary}\n{Counts}\n{PerTurn}";
@@ -51,11 +52,14 @@ public static class OverlayText
     private const string Indent = "\u00A0\u00A0";
 
     public static PanelText Build(DeckAnalysis a, bool showCardNames, CycleFigures cycle,
-        DeckAdviceResult advice)
+        DeckAdviceResult advice, TurnForecast forecast = default)
     {
         var summary = new StringBuilder();
         summary.Append($"[b][color={Gold}]Spire Sense[/color][/b]  [color={Dim}]{a.TotalCards} cards[/color]\n");
         AppendAdvice(summary, advice);
+
+        var thisTurn = new StringBuilder();
+        AppendThisTurn(thisTurn, forecast);
 
         var counts = new StringBuilder();
         AppendCategoryCounts(counts, a);
@@ -64,7 +68,43 @@ public static class OverlayText
         AppendCycle(perTurn, cycle);
         AppendFootnotes(perTurn, a, showCardNames);
 
-        return new PanelText(summary.ToString().TrimEnd('\n'), counts.ToString(), perTurn.ToString());
+        return new PanelText(summary.ToString().TrimEnd('\n'), thisTurn.ToString(),
+            counts.ToString(), perTurn.ToString());
+    }
+
+    /// <summary>
+    /// The fight in front of you: what the enemies have announced, and the most your hand could hit
+    /// back for. Empty outside combat, which is what keeps its divider off the panel on the map.
+    ///
+    /// These are the only figures on the panel about right now rather than about the run, so they
+    /// sit directly under the title where the eye lands first during a fight.
+    /// </summary>
+    private static void AppendThisTurn(StringBuilder sb, TurnForecast forecast)
+    {
+        if (!forecast.HasCombat)
+        {
+            return;
+        }
+
+        sb.Append($"[b][color={Gold}]This turn[/color][/b]\n");
+        sb.Append("[table=3]");
+
+        AppendRow(sb, "Incoming:", forecast.IncomingDamage.ToString(CultureInfo.InvariantCulture));
+
+        // Only worth a line when you are actually holding something: "after block" equal to
+        // incoming is a row that says nothing.
+        if (forecast.Block > 0)
+        {
+            AppendRow(sb, Indent + "after block:",
+                forecast.AfterBlock.ToString(CultureInfo.InvariantCulture));
+        }
+
+        AppendRow(sb, "Your damage:", forecast.OutgoingDamage.ToString(CultureInfo.InvariantCulture),
+            forecast.EnergyLimited
+                ? $" [color={Dim}]({forecast.AttacksPlayed} of {forecast.AttacksInHand})[/color]"
+                : null);
+
+        sb.Append("[/table]");
     }
 
     /// <summary>
